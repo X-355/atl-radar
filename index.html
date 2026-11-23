@@ -175,8 +175,12 @@ async function loadCoin(c) {
     if (i === 0) { w.l = body; w.h = top; } else { w.l = Math.max(w.l, body * 0.5); w.h = Math.min(w.h, top * 2); } });
   let atl = Infinity, atlT = 0, ath = 0, athT = 0;
   for (const w of k) { if (w.l < atl) { atl = w.l; atlT = w.t; } if (w.h > ath) { ath = w.h; athT = w.t; } }
-  const price = c.price;
-  return { ...c, k, atl, atlT, ath, athT, dist: price / atl - 1, fromAth: price / ath - 1,
+  const lastWeek = k[k.length - 1];
+  if (Date.now() - lastWeek.t > 21 * 864e5) return null;          // pair no longer trading
+  let price = c.price > 0 ? c.price : lastWeek.c;
+  if (!(price > 0) || !(atl > 0)) return null;                    // broken price feed
+  if (price < atl) { atl = price; atlT = lastWeek.t; }           // making a new low right now
+  return { ...c, price, k, atl, atlT, ath, athT, dist: price / atl - 1, fromAth: price / ath - 1,
            daysSince: Math.round((Date.now() - atlT) / 864e5), listed: k[0].t, weeks: k.length, rt: retests(k) };
 }
 async function load() {
