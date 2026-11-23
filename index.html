@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATL Radar</title>
+<meta name="robots" content="noindex">
+<style>
+:root { --bg:#f1f1ef; --panel:#fff; --line:#deded9; --text:#23262d; --muted:#5a5f69; --accent:#2563eb;
+  --up:#0b9b5c; --down:#e02424; --warn:#b36b00;
+  --h1:#b91c1c; --h2:#e8590c; --h3:#f59f00; --h4:#9aa2b3; --h5:#6fb0ff; --h6:#1f78ff; }
+[data-theme="dark"] { --bg:#14161b; --panel:#1d2027; --line:#2f333c; --text:#e8e9ec; --muted:#a2a7b2; --accent:#6ea0ff;
+  --up:#34c38f; --down:#ff6b6b; --warn:#f0a43a; --h4:#5d6472; --h5:#3f7fd6; --h6:#2a5fc2; }
+* { box-sizing:border-box }
+body { margin:0; background:var(--bg); color:var(--text); font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif }
+header { display:flex; align-items:center; gap:12px; padding:14px 20px; border-bottom:1px solid var(--line); background:var(--panel); position:sticky; top:0; z-index:5 }
+header h1 { font-size:19px; margin:0 } header .sub { color:var(--muted); font-size:13px }
+header .sp { flex:1 }
+button, select, input { font:inherit; color:var(--text); background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:6px 10px }
+button { cursor:pointer } button:hover { border-color:var(--accent) }
+button.on { background:var(--accent); color:#fff; border-color:var(--accent) }
+main { max-width:1180px; margin:0 auto; padding:18px 20px 60px }
+.card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:16px }
+.note { color:var(--muted); font-size:13.5px; margin:6px 0 0 }
+.muted { color:var(--muted) }
+.row { display:flex; flex-wrap:wrap; gap:10px; align-items:center }
+.stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; margin-top:12px }
+.stat { border:1px solid var(--line); border-radius:10px; padding:10px 12px }
+.stat b { display:block; font-size:22px } .stat span { color:var(--muted); font-size:12.5px }
+.hivewrap { overflow:hidden; margin-top:14px }
+.hive { position:relative; margin:0 auto }
+.hex { position:absolute; border:0; padding:0; clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.1; cursor:pointer; transition:transform .12s }
+.hex:hover, .hex:focus-visible { transform:scale(1.08); z-index:2; outline:none }
+.hex .hs { font-weight:700 } .hex .hp { font-size:.78em; opacity:.95 }
+.legendrow { display:flex; flex-wrap:wrap; gap:12px; font-size:12.5px; color:var(--muted); margin-top:10px }
+.legendrow i { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:5px; vertical-align:-1px }
+table { width:100%; border-collapse:collapse; font-size:14px }
+th, td { padding:7px 8px; border-bottom:1px solid var(--line); text-align:right; white-space:nowrap }
+th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align:left }
+th { color:var(--muted); font-weight:600; cursor:pointer; user-select:none; position:sticky; top:0; background:var(--panel) }
+tbody tr { cursor:pointer } tbody tr:hover { background:color-mix(in srgb, var(--accent) 7%, transparent) }
+.tablewrap { max-height:560px; overflow:auto; margin-top:12px }
+.pill { display:inline-block; padding:1px 8px; border-radius:99px; font-size:12px; font-weight:600; color:#fff }
+.up { color:var(--up) } .down { color:var(--down) } .warn { color:var(--warn) }
+#detail[hidden] { display:none }
+.dgrid { display:grid; grid-template-columns:1.35fr 1fr; gap:16px } @media (max-width:900px){ .dgrid { grid-template-columns:1fr } }
+.calc label { display:block; font-size:13px; color:var(--muted); margin:10px 0 4px }
+.calc input[type=range] { width:100%; padding:0; border:0 }
+.big { font-size:26px; font-weight:700 }
+.res { border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-top:12px }
+.bar { height:10px; border-radius:6px; background:var(--line); overflow:hidden; margin-top:4px }
+.bar > i { display:block; height:100% }
+svg text { fill:var(--muted); font-size:11px }
+.close { float:right }
+.disclaimer { font-size:12.5px; color:var(--muted); border-top:1px solid var(--line); padding-top:12px; margin-top:24px }
+@media (max-width:600px){ header .sub { display:none } header { padding:10px 14px } main { padding:12px 10px 40px } .card { padding:12px } }
+h2 { font-size:17px; margin:0 } h3 { font-size:15px; margin:18px 0 6px }
+.tag { font-size:11.5px; color:var(--muted); border:1px solid var(--line); border-radius:6px; padding:1px 6px }
+</style>
+</head>
+<body>
+<header>
+  <div><h1>ATL Radar</h1><div class="sub">How close the biggest coins are to their all-time lows on Binance, and what's waiting in the order book there</div></div>
+  <div class="sp"></div>
+  <button id="themeBtn" type="button" aria-label="Switch light or dark mode">◐ Theme</button>
+  <button id="refreshBtn" type="button">↻ Refresh</button>
+</header>
+<main>
+  <section class="card">
+    <div class="row">
+      <label>Coins <select id="topN"><option>50</option><option selected>100</option><option>150</option></select></label>
+      <button type="button" class="on" data-view="hive">Honeycomb</button>
+      <button type="button" data-view="table">Table</button>
+      <span class="sp"></span><span id="status" class="muted" aria-live="polite">Loading…</span>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div id="viewHive"></div>
+    <div id="viewTable" hidden></div>
+    <p class="note">ATL here is the lowest price since the coin listed on Binance (USDT pair), read from weekly candles. That can be above the coin's true all-time low on other exchanges. The listing week and flash-crash wicks more than 50% below a week's open or close are ignored. Tap a coin for its chart, a liquidation calculator and the order book near its ATL.</p>
+  </section>
+
+  <section class="card" id="detail" hidden></section>
+
+  <p class="disclaimer">Research tool for personal use. Data is read straight from Binance's public API in your browser (and the coin list from CoinGecko). Nothing is stored or sent anywhere else. The liquidation figures use Binance's simplified isolated-margin formula and ignore fees, funding and tiered margin, so treat them as estimates. A coin returning to its ATL often breaks it. This is research, not financial advice.</p>
+</main>
+
+<script>
+"use strict";
+const BN = "https://data-api.binance.vision/api/v3";
+const CG = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=200&page=1";
+const STABLE = new Set("USDT USDC BUSD DAI TUSD FDUSD USDP USDD PYUSD USDE USDS FRAX LUSD GUSD EURC EURT AEUR USD1 RLUSD USDX USTC SUSD WBTC WETH STETH WSTETH WEETH RETH CBETH CBBTC BTCB WBETH PAXG XAUT BFUSD USDF BNSOL JITOSOL MSOL EZETH RSETH SOLVBTC".split(" "));
+const BINS = [
+  { max: 0.10, name: "Within 10% of ATL", bg: "var(--h1)", fg: "#fff" },
+  { max: 0.25, name: "10–25% above", bg: "var(--h2)", fg: "#fff" },
+  { max: 0.50, name: "25–50% above", bg: "var(--h3)", fg: "#1b1b1b" },
+  { max: 1.00, name: "50–100% above", bg: "var(--h4)", fg: "#fff" },
+  { max: 3.00, name: "2–4× the ATL", bg: "var(--h5)", fg: "#fff" },
+  { max: Infinity, name: "Over 4× the ATL", bg: "var(--h6)", fg: "#fff" },
+];
+const binOf = (d) => BINS.find((b) => d <= b.max);
+const $ = (id) => document.getElementById(id);
+const state = { rows: [], view: "hive", sort: { key: "dist", dir: 1 }, sel: null };
+
+// ---------- helpers
+const fmtP = (p) => p == null || !isFinite(p) ? "–" : p >= 1000 ? "$" + p.toLocaleString(undefined, { maximumFractionDigits: 0 })
+  : p >= 10 ? "$" + p.toLocaleString(undefined, { maximumFractionDigits: 2 }) : p >= 1 ? "$" + p.toLocaleString(undefined, { maximumFractionDigits: 3 }) : "$" + Number(p.toPrecision(4));
+const pct = (x, d = 0) => (x >= 0 ? "+" : "") + (x * 100).toFixed(d) + "%";
+const usd = (x) => x >= 1e9 ? "$" + (x / 1e9).toFixed(2) + "B" : x >= 1e6 ? "$" + (x / 1e6).toFixed(2) + "M" : x >= 1e3 ? "$" + (x / 1e3).toFixed(0) + "k" : "$" + x.toFixed(0);
+const dateOf = (ms) => new Date(ms).toISOString().slice(0, 10);
+function el(tag, attrs = {}, kids = []) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) { if (k === "style") e.style.cssText = v; else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v); }
+  for (const k of [].concat(kids)) e.append(k instanceof Node ? k : document.createTextNode(String(k)));
+  return e;
+}
+async function getJSON(url, tries = 3) {
+  for (let i = 0; i < tries; i++) {
+    try { const r = await fetch(url); if (r.ok) return await r.json(); if (r.status === 400) return null; } catch (e) {}
+    await new Promise((s) => setTimeout(s, 800 * (i + 1)));
+  }
+  throw new Error("Could not reach " + new URL(url).host);
+}
+async function pool(items, n, fn) {
+  const out = new Array(items.length); let i = 0;
+  await Promise.all(Array.from({ length: n }, async () => { while (i < items.length) { const j = i++; try { out[j] = await fn(items[j], j); } catch (e) { out[j] = null; } } }));
+  return out;
+}
+
+// ---------- liquidation math (Binance isolated long, simplified)
+const liqPrice = (entry, lev, mmr) => entry * (1 - 1 / lev) / (1 - mmr);
+function maxLevFor(entry, target, mmr) { const x = 1 - target * (1 - mmr) / entry; return x <= 0 ? Infinity : 1 / x; }
+
+// ---------- ATL retests from weekly candles (only past data at each point)
+function retests(k) {
+  const L = k.map((c) => c.l), C = k.map((c) => c.c), out = []; let last = -99;
+  for (let i = 26; i < k.length - 1; i++) {
+    let atl = Infinity, ai = 0; for (let j = 0; j <= i - 4; j++) if (L[j] < atl) { atl = L[j]; ai = j; }
+    let recentMin = Infinity; for (let j = i - 4 + 1; j < i; j++) recentMin = Math.min(recentMin, L[j]);
+    if (recentMin < atl || L[i] > atl * 1.10 || i - last < 4) continue;
+    last = i;
+    const fut = L.slice(i + 1, i + 9), done = fut.length === 8;
+    const minF = Math.min(...fut);
+    out.push({ t: k[i].t, atl, atlT: k[ai].t, held: minF >= atl, depth: Math.min(0, minF / atl - 1), done,
+               ret8: done ? C[i + 8] / C[i] - 1 : null });
+  }
+  return out;
+}
+
+// ---------- data
+async function loadList(n) {
+  const prices = await getJSON(BN + "/ticker/price");
+  const px = new Map(prices.map((p) => [p.symbol, +p.price]));
+  let coins = [];
+  try {
+    const cg = await getJSON(CG, 1);
+    coins = (cg || []).map((c) => ({ sym: c.symbol.toUpperCase(), name: c.name, rank: c.market_cap_rank, cap: c.market_cap }));
+  } catch (e) { /* CoinGecko rate-limited: fall back to Binance volume ranking */ }
+  if (!coins.length) {
+    const t = await getJSON(BN + "/ticker/24hr?type=MINI");
+    coins = t.filter((x) => x.symbol.endsWith("USDT")).sort((a, b) => b.quoteVolume - a.quoteVolume)
+      .map((x, i) => ({ sym: x.symbol.slice(0, -4), name: x.symbol.slice(0, -4), rank: i + 1, cap: null }));
+    $("status").textContent = "CoinGecko is busy, so coins are ranked by Binance volume instead…";
+  }
+  const seen = new Set();
+  return coins.filter((c) => !STABLE.has(c.sym) && px.has(c.sym + "USDT") && !seen.has(c.sym) && seen.add(c.sym))
+    .slice(0, n).map((c) => ({ ...c, pair: c.sym + "USDT", price: px.get(c.sym + "USDT") }));
+}
+async function loadCoin(c) {
+  const raw = await getJSON(`${BN}/klines?symbol=${c.pair}&interval=1w&limit=1000`);
+  if (!raw || raw.length < 8) return null;
+  const k = raw.map((r) => ({ t: r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], qv: +r[7] }));
+  // Ignore flash-crash prints: a weekly low more than 50% under that week's open/close, and the listing week itself
+  k.forEach((w, i) => { const body = Math.min(w.o, w.c), top = Math.max(w.o, w.c);
+    if (i === 0) { w.l = body; w.h = top; } else { w.l = Math.max(w.l, body * 0.5); w.h = Math.min(w.h, top * 2); } });
+  let atl = Infinity, atlT = 0, ath = 0, athT = 0;
+  for (const w of k) { if (w.l < atl) { atl = w.l; atlT = w.t; } if (w.h > ath) { ath = w.h; athT = w.t; } }
+  const price = c.price;
+  return { ...c, k, atl, atlT, ath, athT, dist: price / atl - 1, fromAth: price / ath - 1,
+           daysSince: Math.round((Date.now() - atlT) / 864e5), listed: k[0].t, weeks: k.length, rt: retests(k) };
+}
+async function load() {
+  const n = +$("topN").value;
+  $("status").textContent = "Loading coin list…";
+  try {
+    const list = await loadList(n);
+    let done = 0;
+    const rows = await pool(list, 6, async (c) => { const r = await loadCoin(c); $("status").textContent = `Reading Binance history… ${++done}/${list.length}`; return r; });
+    state.rows = rows.filter(Boolean);
+    $("status").textContent = `${state.rows.length} coins · updated ${new Date().toLocaleTimeString()}`;
+    render();
+  } catch (e) {
+    $("status").textContent = "Couldn't load data: " + e.message + ". Check your connection and press Refresh.";
+  }
+}
+
+// ---------- overview
+function renderStats() {
+  const R = state.rows, near = R.filter((r) => r.dist <= 0.10), new30 = R.filter((r) => r.daysSince <= 30);
+  const allRt = R.flatMap((r) => r.rt.filter((x) => x.done)), held = allRt.filter((x) => x.held);
+  $("stats").replaceChildren(
+    el("div", { class: "stat" }, [el("b", {}, [near.length]), el("span", {}, ["coins within 10% of their ATL"])]),
+    el("div", { class: "stat" }, [el("b", {}, [new30.length]), el("span", {}, ["set a new ATL in the last 30 days"])]),
+    el("div", { class: "stat" }, [el("b", {}, [allRt.length ? Math.round(held.length / allRt.length * 100) + "%" : "–"]),
+      el("span", {}, [`of ${allRt.length} past ATL retests held for the next 8 weeks`])]),
+    el("div", { class: "stat" }, [el("b", {}, [R.length ? pct(median(R.map((r) => r.dist))) : "–"]), el("span", {}, ["median distance above ATL"])]),
+  );
+}
+const median = (a) => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : NaN; };
+
+function renderHive() {
+  const box = $("viewHive"), rows = [...state.rows].sort((a, b) => a.dist - b.dist);
+  const W = Math.min(box.clientWidth || 900, 1120), hw = W < 600 ? 60 : 78, hh = hw * 1.1547;
+  const cols = Math.max(3, Math.floor((W - hw / 2) / hw)), nrows = Math.ceil(rows.length / cols);
+  const hive = el("div", { class: "hive", role: "group", "aria-label": "Coins coloured by distance to their all-time low" });
+  hive.style.cssText = `width:${cols * hw + hw / 2}px;height:${(nrows - 1) * hh * 0.75 + hh}px;max-width:100%`;
+  rows.forEach((r, i) => {
+    const rr = Math.floor(i / cols), cc = i % cols, b = binOf(r.dist);
+    const cell = el("button", { type: "button", class: "hex", title: `${r.name}: ${pct(r.dist)} above its Binance ATL of ${fmtP(r.atl)} (${dateOf(r.atlT)})`,
+      "aria-label": `${r.name}, ${Math.round(r.dist * 100)} percent above its all-time low`, onclick: () => openDetail(r.pair) },
+      [el("span", { class: "hs" }, [r.sym.slice(0, 6)]), el("span", { class: "hp" }, [r.dist < 10 ? pct(r.dist) : (r.dist + 1).toFixed(0) + "×"])]);
+    cell.style.cssText = `left:${cc * hw + (rr % 2) * hw / 2}px;top:${rr * hh * 0.75}px;width:${hw - 3}px;height:${hh - 3}px;background:${b.bg};color:${b.fg};font-size:${hw / 5.6}px`;
+    hive.append(cell);
+  });
+  const lg = el("div", { class: "legendrow" }, BINS.map((b) => el("span", {}, [el("i", { style: "background:" + b.bg }), b.name])));
+  box.replaceChildren(el("div", { class: "hivewrap" }, [hive]), lg,
+    el("p", { class: "note" }, ["Sorted closest-to-ATL first. Red tiles are the ones where a long with its liquidation below the ATL needs little room, and where a break of the ATL is most likely to be tested."]));
+}
+
+const COLS = [
+  ["sym", "Coin"], ["name", "Name"], ["price", "Price"], ["atl", "Binance ATL"], ["dist", "Above ATL"],
+  ["daysSince", "Days since ATL"], ["fromAth", "From ATH"], ["lev", "Max lev. (liq 10% under ATL)"], ["held", "Past retests held"],
+];
+function renderTable() {
+  const s = state.sort, mmr = 0.01;
+  const rows = state.rows.map((r) => {
+    const d = r.rt.filter((x) => x.done);
+    return { ...r, lev: maxLevFor(r.price, r.atl * 0.9, mmr), held: d.length ? d.filter((x) => x.held).length / d.length : -1, nrt: d.length };
+  }).sort((a, b) => (a[s.key] > b[s.key] ? 1 : a[s.key] < b[s.key] ? -1 : 0) * s.dir);
+  const thead = el("thead", {}, [el("tr", {}, COLS.map(([k, label]) => el("th", { scope: "col", onclick: () => { s.dir = s.key === k ? -s.dir : 1; s.key = k; renderTable(); } },
+    [label + (s.key === k ? (s.dir > 0 ? " ▲" : " ▼") : "")])))]);
+  const tbody = el("tbody", {}, rows.map((r) => {
+    const b = binOf(r.dist);
+    return el("tr", { tabindex: "0", onclick: () => openDetail(r.pair), onkeydown: (e) => e.key === "Enter" && openDetail(r.pair) }, [
+      el("td", {}, [el("b", {}, [r.sym])]), el("td", { class: "muted" }, [r.name]), el("td", {}, [fmtP(r.price)]), el("td", {}, [fmtP(r.atl)]),
+      el("td", {}, [el("span", { class: "pill", style: `background:${b.bg};color:${b.fg}` }, [pct(r.dist)])]),
+      el("td", {}, [r.daysSince]), el("td", { class: "down" }, [pct(r.fromAth)]),
+      el("td", {}, [isFinite(r.lev) ? r.lev.toFixed(1) + "×" : "any"]),
+      el("td", {}, [r.nrt ? `${Math.round(r.held * 100)}% of ${r.nrt}` : "none yet"]),
+    ]);
+  }));
+  $("viewTable").replaceChildren(el("div", { class: "tablewrap" }, [el("table", {}, [thead, tbody])]),
+    el("p", { class: "note" }, ["Max lev. = the highest leverage whose liquidation price would sit 10% below the ATL if you bought now (1% maintenance margin). Past retests = times the price came back within 10% of the ATL as it stood then, and whether it stayed above it for the next 8 weeks."]));
+}
+function render() { renderStats(); state.view === "hive" ? renderHive() : renderTable(); }
+
+// ---------- detail
+async function openDetail(pair) {
+  const r = state.rows.find((x) => x.pair === pair); if (!r) return;
+  state.sel = { r, entry: r.price, buffer: 0.10, mmr: 0.01, lev: null, book: null };
+  $("detail").hidden = false; renderDetail(); $("detail").scrollIntoView({ behavior: "smooth", block: "start" });
+  try {
+    const d = await getJSON(`${BN}/depth?symbol=${pair}&limit=5000`);
+    if (state.sel && state.sel.r === r) { state.sel.book = analyzeBook(d, r); renderDetail(); }
+  } catch (e) { if (state.sel) { state.sel.book = { err: e.message }; renderDetail(); } }
+}
+
+function analyzeBook(d, r) {
+  const bids = d.bids.map(([p, q]) => [+p, +p * +q]), asks = d.asks.map(([p, q]) => [+p, +p * +q]);
+  const mid = (bids[0][0] + asks[0][0]) / 2, lowest = bids[bids.length - 1][0];
+  const within = (side, pctv) => side.filter(([p]) => Math.abs(p / mid - 1) <= pctv).reduce((s, [, n]) => s + n, 0);
+  // group bids into 0.5% buckets below mid, find unusually large ones
+  const buckets = new Map();
+  for (const [p, n] of bids) { const k = Math.floor((1 - p / mid) / 0.005); buckets.set(k, (buckets.get(k) || 0) + n); }
+  const arr = [...buckets.entries()].map(([k, n]) => ({ lo: mid * (1 - (k + 1) * 0.005), hi: mid * (1 - k * 0.005), n }));
+  const med = median(arr.map((b) => b.n)) || 1;
+  const walls = arr.filter((b) => b.n >= med * 4).sort((a, b) => b.n - a.n).slice(0, 6)
+    .map((b) => ({ ...b, mult: b.n / med, vsAtl: ((b.lo + b.hi) / 2) / r.atl - 1 }));
+  const reachesAtl = lowest <= r.atl;
+  const nearAtl = reachesAtl ? bids.filter(([p]) => p >= r.atl * 0.97 && p <= r.atl * 1.03).reduce((s, [, n]) => s + n, 0) : null;
+  return { mid, lowest, bid2: within(bids, 0.02), ask2: within(asks, 0.02), bid5: within(bids, 0.05), ask5: within(asks, 0.05),
+           walls, med, reachesAtl, nearAtl, depthPct: 1 - lowest / mid };
+}
+
+function chartSVG(r, liq) {
+  const k = r.k, W = 640, H = 260, P = { l: 52, r: 10, t: 10, b: 22 };
+  const lo = Math.min(r.atl, liq > 0 ? liq : r.atl) * 0.85, hi = Math.max(...k.map((w) => w.h)) * 1.05;
+  const x = (i) => P.l + (i / (k.length - 1)) * (W - P.l - P.r), y = (v) => P.t + (1 - (Math.log(v) - Math.log(lo)) / (Math.log(hi) - Math.log(lo))) * (H - P.t - P.b);
+  const path = k.map((w, i) => (i ? "L" : "M") + x(i).toFixed(1) + "," + y(w.c).toFixed(1)).join("");
+  const lowPath = k.map((w, i) => (i ? "L" : "M") + x(i).toFixed(1) + "," + y(w.l).toFixed(1)).join("");
+  const ticks = []; const mults = Math.log10(hi / lo) < 1.2 ? [1, 1.5, 2, 3, 5, 7] : [1, 3];
+  for (let e = Math.floor(Math.log10(lo)); e <= Math.ceil(Math.log10(hi)); e++) for (const m of mults) { const v = m * 10 ** e; if (v >= lo && v <= hi) ticks.push(v); }
+  const years = []; let py = null; k.forEach((w, i) => { const yv = new Date(w.t).getUTCFullYear(); if (yv !== py) { years.push([i, yv]); py = yv; } });
+  const idxOf = (t) => k.findIndex((w) => w.t === t);
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg"); svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("width", "100%");
+  svg.setAttribute("role", "img"); svg.setAttribute("aria-label", `${r.name} weekly price, log scale, with its Binance all-time low and your liquidation price`);
+  let s = "";
+  ticks.forEach((v) => s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${P.l - 6}" y="${y(v) + 4}" text-anchor="end">${fmtP(v)}</text>`);
+  years.filter((_, i) => years.length < 9 || i % 2 === 0).forEach(([i, yv]) => s += `<text x="${x(i)}" y="${H - 6}" text-anchor="middle">${yv}</text>`);
+  s += `<path d="${lowPath}" fill="none" stroke="var(--muted)" stroke-width="1" opacity=".35"/>`;
+  s += `<path d="${path}" fill="none" stroke="var(--accent)" stroke-width="1.8"/>`;
+  r.rt.forEach((e) => { const i = idxOf(e.t); if (i >= 0) s += `<circle cx="${x(i)}" cy="${y(k[i].l)}" r="4.5" fill="${!e.done ? "var(--muted)" : e.held ? "var(--up)" : "var(--down)"}" stroke="var(--panel)" stroke-width="1.5"><title>${dateOf(e.t)}: retest ${!e.done ? "still in progress" : e.held ? "held" : "broke, fell " + Math.round(-e.depth * 100) + "% below it"}</title></circle>`; });
+  s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y(r.atl)}" y2="${y(r.atl)}" stroke="var(--text)" stroke-dasharray="6 4"/><text x="${W - P.r - 4}" y="${y(r.atl) - 5}" text-anchor="end" style="fill:var(--text)">ATL ${fmtP(r.atl)}</text>`;
+  if (liq > lo) s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y(liq)}" y2="${y(liq)}" stroke="var(--down)" stroke-dasharray="2 3" stroke-width="1.6"/><text x="${W - P.r - 4}" y="${y(liq) + 13}" text-anchor="end" style="fill:var(--down)">Liquidation ${fmtP(liq)}</text>`;
+  svg.innerHTML = s; return svg;
+}
+
+function renderDetail() {
+  const S = state.sel, r = S.r, box = $("detail");
+  const targetLiq = r.atl * (1 - S.buffer);
+  const maxLev = maxLevFor(S.entry, targetLiq, S.mmr);
+  const lev = S.lev ?? Math.max(1, Math.min(125, Math.floor(maxLev * 10) / 10));
+  const liq = liqPrice(S.entry, lev, S.mmr), liqVsAtl = liq / r.atl - 1;
+  const done = r.rt.filter((x) => x.done), broke = done.filter((x) => !x.held);
+  const wouldDie = liqVsAtl >= 0 ? broke.length : broke.filter((x) => x.depth <= liqVsAtl).length; // past breaks that went deeper than this liquidation
+
+  const calc = el("div", { class: "calc" }, [
+    el("h3", {}, ["Liquidation below the ATL"]),
+    el("label", { for: "inEntry" }, ["Entry price (defaults to the current price)"]),
+    el("input", { id: "inEntry", type: "number", step: "any", value: +S.entry.toPrecision(6), style: "width:100%",
+      onchange: (e) => { const v = +e.target.value; if (v > 0) { S.entry = v; S.lev = null; renderDetail(); } } }),
+    el("label", { for: "inBuf" }, [`Keep liquidation ${Math.round(S.buffer * 100)}% below the ATL`]),
+    el("input", { id: "inBuf", type: "range", min: "0", max: "60", step: "1", value: String(Math.round(S.buffer * 100)),
+      onchange: (e) => { S.buffer = +e.target.value / 100; S.lev = null; renderDetail(); document.getElementById("inBuf")?.focus(); } }),
+    el("label", { for: "inLev" }, ["…or pick a leverage yourself"]),
+    el("input", { id: "inLev", type: "number", min: "1", max: "125", step: "0.1", value: lev.toFixed(1), style: "width:100%",
+      onchange: (e) => { const v = +e.target.value; if (v >= 1) { S.lev = v; renderDetail(); } } }),
+    el("div", { class: "res" }, [
+      el("div", { class: "muted" }, ["Highest leverage that keeps liquidation " + Math.round(S.buffer * 100) + "% under the ATL"]),
+      el("div", { class: "big" }, [!isFinite(maxLev) ? "Any" : maxLev < 1.1 ? "About 1×" : maxLev.toFixed(1) + "×"]),
+      el("div", { class: "muted" }, [!isFinite(maxLev) ? "Your entry is at or below that level, so even high leverage keeps liquidation under it. Check the distance to your liquidation instead."
+        : maxLev < 1.1 ? `The ATL is so far below the price that only an unleveraged long stays safe. Liquidation would need to be at ${fmtP(targetLiq)}.`
+        : `Liquidation at ${fmtP(targetLiq)}`]),
+    ]),
+    el("div", { class: "res" }, [ lev <= 1 ? el("div", {}, ["At 1× a long can't be liquidated: you'd lose at most what you put in, if the coin went to zero."]) :
+      el("div", {}, [`At ${lev.toFixed(1)}×: liquidation at `, el("b", { class: "down" }, [fmtP(liq)]), `, which is `,
+        el("b", {}, [Math.round(Math.abs(liqVsAtl) * 100) + (liqVsAtl <= 0 ? "% below" : "% above")]), " the ATL and ",
+        el("b", {}, [pct(liq / S.entry - 1)]), " from your entry."]),
+      done.length ? el("p", { class: "note" }, [`On this coin, ${broke.length} of ${done.length} past ATL retests broke the ATL. `,
+        wouldDie ? el("b", { class: "down" }, [`${wouldDie} of them fell far enough to hit a liquidation this far down.`]) : "None fell far enough to reach a liquidation this far down."])
+        : el("p", { class: "note" }, ["No completed ATL retests on this coin yet, so there's no history to check against."]),
+    ]),
+    el("label", { for: "inMmr" }, ["Maintenance margin rate"]),
+    el("select", { id: "inMmr", onchange: (e) => { S.mmr = +e.target.value; renderDetail(); } },
+      [["0.004", "0.4% (BTC/ETH, small position)"], ["0.01", "1% (typical)"], ["0.025", "2.5% (small coins / bigger size)"]]
+        .map(([v, t]) => { const o = el("option", { value: v }, [t]); if (+v === S.mmr) o.selected = true; return o; })),
+  ]);
+
+  const bk = S.book;
+  let book;
+  if (!bk) book = el("p", { class: "muted" }, ["Reading Binance's order book…"]);
+  else if (bk.err) book = el("p", { class: "warn" }, ["Couldn't read the order book: " + bk.err]);
+  else {
+    const tot2 = bk.bid2 + bk.ask2, b2 = bk.bid2 / tot2;
+    book = el("div", {}, [
+      el("div", {}, [`Within 2% of the price: `, el("b", {}, [usd(bk.bid2)]), " bids vs ", el("b", {}, [usd(bk.ask2)]), " asks"]),
+      el("div", { class: "bar", "aria-hidden": "true" }, [el("i", { style: `width:${(b2 * 100).toFixed(0)}%;background:var(--up)` })]),
+      el("div", { style: "margin-top:8px" }, [`Within 5%: `, el("b", {}, [usd(bk.bid5)]), " bids vs ", el("b", {}, [usd(bk.ask5)]), " asks"]),
+      el("p", { class: "note" }, [bk.reachesAtl
+        ? el("span", {}, ["The visible book reaches down to the ATL. Bids within 3% of the ATL: ", el("b", {}, [usd(bk.nearAtl)]), "."])
+        : `Binance shows the top 5,000 bid levels, which only reach ${Math.round(bk.depthPct * 100)}% below the price. The ATL is ${Math.round((1 - r.atl / bk.mid) * 100)}% below the price, so orders sitting at the ATL aren't visible yet. They show up as the price gets closer.`]),
+      el("h3", {}, ["Unusually large bids"]),
+      bk.walls.length ? el("table", {}, [
+        el("thead", {}, [el("tr", {}, ["Price zone", "Size", "vs typical", "vs ATL"].map((h) => el("th", {}, [h])))]),
+        el("tbody", {}, bk.walls.map((w) => el("tr", { style: "cursor:default" }, [
+          el("td", {}, [`${fmtP(w.lo)}–${fmtP(w.hi)}`]), el("td", {}, [usd(w.n)]), el("td", {}, [w.mult.toFixed(1) + "×"]),
+          el("td", { class: Math.abs(w.vsAtl) <= 0.03 ? "warn" : "" }, [Math.abs(w.vsAtl) <= 0.03 ? "at the ATL" : pct(w.vsAtl)]),
+        ]))),
+      ]) : el("p", { class: "muted" }, ["No bid zone is more than 4× the typical size."]),
+      el("p", { class: "note" }, ["Bids are grouped into 0.5% price zones. A zone counts as unusual at 4× the median zone size. Big resting orders can be pulled at any moment, so a wall is a clue, not a floor."]),
+    ]);
+  }
+
+  const rtTable = r.rt.length ? el("table", {}, [
+    el("thead", {}, [el("tr", {}, ["Retest week", "ATL then", "Outcome (8 weeks)", "Lowest vs ATL", "Return after 8w"].map((h) => el("th", {}, [h])))]),
+    el("tbody", {}, [...r.rt].reverse().map((e) => el("tr", { style: "cursor:default" }, [
+      el("td", {}, [dateOf(e.t)]), el("td", {}, [fmtP(e.atl)]),
+      el("td", { class: !e.done ? "muted" : e.held ? "up" : "down" }, [!e.done ? "in progress" : e.held ? "Held" : "Broke"]),
+      el("td", {}, [e.done ? (e.depth < 0 ? pct(e.depth) : "stayed above") : "–"]),
+      el("td", { class: e.ret8 > 0 ? "up" : "down" }, [e.ret8 == null ? "–" : pct(e.ret8)]),
+    ]))),
+  ]) : el("p", { class: "muted" }, ["The price hasn't come back near an older ATL yet."]);
+
+  box.replaceChildren(
+    el("button", { type: "button", class: "close", onclick: () => { box.hidden = true; state.sel = null; } }, ["✕ Close"]),
+    el("h2", {}, [`${r.name} (${r.sym}) `, el("span", { class: "tag" }, [r.pair])]),
+    el("p", { class: "note" }, [`Price ${fmtP(r.price)} · Binance ATL ${fmtP(r.atl)} on ${dateOf(r.atlT)} (${r.daysSince} days ago) · ${pct(r.dist)} above it · ${pct(r.fromAth)} from its high of ${fmtP(r.ath)} · on Binance since ${dateOf(r.listed)}`]),
+    el("div", { class: "dgrid" }, [
+      el("div", {}, [chartSVG(r, liq),
+        el("div", { class: "legendrow" }, [el("span", {}, [el("i", { style: "background:var(--accent)" }), "Weekly close (log scale)"]),
+          el("span", {}, [el("i", { style: "background:var(--up)" }), "Retest held"]), el("span", {}, [el("i", { style: "background:var(--down)" }), "Retest broke"])]),
+        el("h3", {}, ["Order book now"]), book]),
+      calc,
+    ]),
+    el("h3", {}, ["Past ATL retests on this coin"]), rtTable,
+    el("p", { class: "note" }, ["A retest is a week when the price came back within 10% of the ATL as it stood then (an ATL at least 4 weeks old). Held means no weekly low went under that ATL in the next 8 weeks."]),
+  );
+}
+
+// ---------- wiring
+document.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => {
+  state.view = b.dataset.view; document.querySelectorAll("[data-view]").forEach((x) => x.classList.toggle("on", x === b));
+  $("viewHive").hidden = state.view !== "hive"; $("viewTable").hidden = state.view !== "table"; if (state.rows.length) render();
+}));
+$("refreshBtn").addEventListener("click", load);
+$("topN").addEventListener("change", load);
+(function theme() {
+  const root = document.documentElement; let t = null;
+  try { t = localStorage.getItem("atlradar.theme"); } catch (e) {}
+  if (!t) t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  const apply = (v) => v === "dark" ? root.setAttribute("data-theme", "dark") : root.removeAttribute("data-theme");
+  apply(t);
+  $("themeBtn").addEventListener("click", () => { t = t === "dark" ? "light" : "dark"; apply(t); try { localStorage.setItem("atlradar.theme", t); } catch (e) {} });
+})();
+let rsz; addEventListener("resize", () => { clearTimeout(rsz); rsz = setTimeout(() => state.rows.length && state.view === "hive" && renderHive(), 200); });
+load();
+</script>
+</body>
+</html>
