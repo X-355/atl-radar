@@ -94,7 +94,7 @@ h2 { font-size:17px; margin:0 } h3 { font-size:15px; margin:18px 0 6px }
 <script>
 "use strict";
 const BN = "https://data-api.binance.vision/api/v3";
-const CG = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=200&page=1";
+const CG = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1";
 const STABLE = new Set("USDT USDC BUSD DAI TUSD FDUSD USDP USDD PYUSD USDE USDS FRAX LUSD GUSD EURC EURT AEUR USD1 RLUSD USDX USTC SUSD U WBTC WETH STETH WSTETH WEETH RETH CBETH CBBTC BTCB WBETH PAXG XAUT BFUSD USDF BNSOL JITOSOL MSOL EZETH RSETH SOLVBTC".split(" "));
 const BINS = [
   { max: 0.10, name: "Within 10% of ATL", bg: "var(--h1)", fg: "#fff" },
@@ -170,7 +170,7 @@ async function loadList(n) {
   }
   const seen = new Set();
   return coins.filter((c) => !STABLE.has(c.sym) && px.has(c.sym + "USDT") && !seen.has(c.sym) && seen.add(c.sym))
-    .slice(0, n + 15).map((c) => ({ ...c, pair: c.sym + "USDT", price: px.get(c.sym + "USDT") }));
+    .slice(0, n + 60).map((c) => ({ ...c, pair: c.sym + "USDT", price: px.get(c.sym + "USDT") }));
 }
 async function loadCoin(c) {
   const raw = await getJSON(`${BN}/klines?symbol=${c.pair}&interval=1w&limit=1000`);
@@ -196,7 +196,7 @@ async function load() {
     const list = await loadList(n);
     let done = 0;
     const rows = await pool(list, 6, async (c) => { const r = await loadCoin(c); $("status").textContent = `Reading Binance history… ${++done}/${list.length}`; return r; });
-    state.rows = rows.filter(Boolean).slice(0, n); // spare coins fill in for any that fail, so the count is exact
+    state.rows = rows.filter(Boolean).slice(0, n); // spare coins fill in for any that fail or are no longer trading
     $("status").textContent = `${state.rows.length} coins · updated ${new Date().toLocaleTimeString()}`;
     render();
   } catch (e) {
@@ -225,11 +225,13 @@ function renderHive() {
   // pick a column count that divides the coin count, so every row is full (no holes)
   let cols = maxC;
   for (let c = maxC; c >= Math.max(3, Math.ceil(maxC / 2)); c--) if (rows.length % c === 0) { cols = c; break; }
+  // a prime count can't fill a rectangle: keep the widest grid, but centre the last row so it doesn't look ragged
+  const lastN = rows.length % cols, padL = lastN ? (cols - lastN) / 2 : 0;
   const nrows = Math.ceil(rows.length / cols);
   const hive = el("div", { class: "hive", role: "group", "aria-label": "Coins coloured by distance to their all-time low" });
   hive.style.cssText = `width:${cols * hw + hw / 2}px;height:${(nrows - 1) * hh * 0.75 + hh}px;max-width:100%`;
   rows.forEach((r, i) => {
-    const rr = Math.floor(i / cols), cc = i % cols, b = binOf(r.dist);
+    const rr = Math.floor(i / cols), cc = (i % cols) + (rr === nrows - 1 && lastN ? Math.floor(padL) : 0), b = binOf(r.dist);
     const cell = el("button", { type: "button", class: "hex", title: `${r.name}: ${pct(r.dist)} above its Binance ATL of ${fmtP(r.atl)} (${dateOf(r.atlT)})`,
       "aria-label": `${r.name}, ${Math.round(r.dist * 100)} percent above its all-time low`, onclick: () => openDetail(r.pair) },
       [el("span", { class: "hs" }, [r.sym.slice(0, 6)]), el("span", { class: "hp" }, [r.dist < 10 ? pct(r.dist) : (r.dist + 1).toFixed(0) + "×"])]);
