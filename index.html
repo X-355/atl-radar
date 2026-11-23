@@ -53,6 +53,7 @@ tbody tr { cursor:pointer } tbody tr:hover { background:color-mix(in srgb, var(-
 .bar > i { display:block; height:100% }
 svg text { fill:var(--muted); font-size:11px }
 .close { float:right }
+.copyright { text-align:right; font-size:12.5px; color:var(--muted); margin:8px 0 0 }
 .disclaimer { font-size:12.5px; color:var(--muted); border-top:1px solid var(--line); padding-top:12px; margin-top:24px }
 @media (max-width:600px){ header .sub { display:none } header { padding:10px 14px } main { padding:12px 10px 40px } .card { padding:12px } }
 h2 { font-size:17px; margin:0 } h3 { font-size:15px; margin:18px 0 6px }
@@ -87,6 +88,7 @@ h2 { font-size:17px; margin:0 } h3 { font-size:15px; margin:18px 0 6px }
   <section class="card" id="detail" hidden></section>
 
   <p class="disclaimer">Research tool for personal use. Data is read straight from Binance's public API in your browser (and the coin list from CoinGecko). Nothing is stored or sent anywhere else. The liquidation figures use Binance's simplified isolated-margin formula and ignore fees, funding and tiered margin, so treat them as estimates. A coin returning to its ATL often breaks it. This is research, not financial advice.</p>
+  <p class="copyright">© <span id="cy">2026</span> X-355. All rights reserved.</p>
 </main>
 
 <script>
@@ -436,6 +438,7 @@ document.querySelectorAll("[data-n]").forEach((b) => b.addEventListener("click",
   $("themeBtn").addEventListener("click", () => { t = t === "dark" ? "light" : "dark"; apply(t); try { localStorage.setItem("atlradar.theme", t); } catch (e) {} });
 })();
 let rsz; addEventListener("resize", () => { clearTimeout(rsz); rsz = setTimeout(() => state.rows.length && state.view === "hive" && renderHive(), 200); });
+try { $("cy").textContent = new Date().getFullYear(); } catch (e) {}
 load();
 </script>
 </body>
