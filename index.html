@@ -69,7 +69,11 @@ h2 { font-size:17px; margin:0 } h3 { font-size:15px; margin:18px 0 6px }
 <main>
   <section class="card">
     <div class="row">
-      <label>Coins <select id="topN"><option>50</option><option selected>100</option><option>150</option></select></label>
+      <span class="muted">Top coins:</span>
+      <button type="button" class="on" data-n="30">30</button>
+      <button type="button" data-n="50">50</button>
+      <button type="button" data-n="100">100</button>
+      <span class="muted" style="margin-left:8px">View:</span>
       <button type="button" class="on" data-view="hive">Honeycomb</button>
       <button type="button" data-view="table">Table</button>
       <span class="sp"></span><span id="status" class="muted" aria-live="polite">Loading…</span>
@@ -184,7 +188,7 @@ async function loadCoin(c) {
            daysSince: Math.round((Date.now() - atlT) / 864e5), listed: k[0].t, weeks: k.length, rt: retests(k) };
 }
 async function load() {
-  const n = +$("topN").value;
+  const n = state.n || 30;
   $("status").textContent = "Loading coin list…";
   try {
     const list = await loadList(n);
@@ -408,7 +412,17 @@ document.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("clic
   $("viewHive").hidden = state.view !== "hive"; $("viewTable").hidden = state.view !== "table"; if (state.rows.length) render();
 }));
 $("refreshBtn").addEventListener("click", load);
-$("topN").addEventListener("change", load);
+document.querySelectorAll("[data-n]").forEach((b) => b.addEventListener("click", () => {
+  if (state.n === +b.dataset.n) return;
+  state.n = +b.dataset.n; document.querySelectorAll("[data-n]").forEach((x) => x.classList.toggle("on", x === b));
+  try { localStorage.setItem("atlradar.n", state.n); } catch (e) {}
+  load();
+}));
+(function restoreN() {
+  let v = 30; try { v = +localStorage.getItem("atlradar.n") || 30; } catch (e) {}
+  if (![30, 50, 100].includes(v)) v = 30;
+  state.n = v; document.querySelectorAll("[data-n]").forEach((x) => x.classList.toggle("on", +x.dataset.n === v));
+})();
 (function theme() {
   const root = document.documentElement; let t = null;
   try { t = localStorage.getItem("atlradar.theme"); } catch (e) {}
