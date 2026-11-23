@@ -168,7 +168,7 @@ async function loadList(n) {
   }
   const seen = new Set();
   return coins.filter((c) => !STABLE.has(c.sym) && px.has(c.sym + "USDT") && !seen.has(c.sym) && seen.add(c.sym))
-    .slice(0, n).map((c) => ({ ...c, pair: c.sym + "USDT", price: px.get(c.sym + "USDT") }));
+    .slice(0, n + 15).map((c) => ({ ...c, pair: c.sym + "USDT", price: px.get(c.sym + "USDT") }));
 }
 async function loadCoin(c) {
   const raw = await getJSON(`${BN}/klines?symbol=${c.pair}&interval=1w&limit=1000`);
@@ -194,7 +194,7 @@ async function load() {
     const list = await loadList(n);
     let done = 0;
     const rows = await pool(list, 6, async (c) => { const r = await loadCoin(c); $("status").textContent = `Reading Binance history… ${++done}/${list.length}`; return r; });
-    state.rows = rows.filter(Boolean);
+    state.rows = rows.filter(Boolean).slice(0, n); // spare coins fill in for any that fail, so the count is exact
     $("status").textContent = `${state.rows.length} coins · updated ${new Date().toLocaleTimeString()}`;
     render();
   } catch (e) {
@@ -219,7 +219,11 @@ const median = (a) => { const s = [...a].sort((x, y) => x - y); return s.length 
 function renderHive() {
   const box = $("viewHive"), rows = [...state.rows].sort((a, b) => a.dist - b.dist);
   const W = Math.min(box.clientWidth || 900, 1120), hw = W < 600 ? 60 : 78, hh = hw * 1.1547;
-  const cols = Math.max(3, Math.floor((W - hw / 2) / hw)), nrows = Math.ceil(rows.length / cols);
+  const maxC = Math.max(3, Math.floor((W - hw / 2) / hw));
+  // pick a column count that divides the coin count, so every row is full (no holes)
+  let cols = maxC;
+  for (let c = maxC; c >= Math.max(3, Math.ceil(maxC / 2)); c--) if (rows.length % c === 0) { cols = c; break; }
+  const nrows = Math.ceil(rows.length / cols);
   const hive = el("div", { class: "hive", role: "group", "aria-label": "Coins coloured by distance to their all-time low" });
   hive.style.cssText = `width:${cols * hw + hw / 2}px;height:${(nrows - 1) * hh * 0.75 + hh}px;max-width:100%`;
   rows.forEach((r, i) => {
