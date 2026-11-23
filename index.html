@@ -51,7 +51,9 @@ tbody tr { cursor:pointer } tbody tr:hover { background:color-mix(in srgb, var(-
 .res { border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-top:12px }
 .bar { height:10px; border-radius:6px; background:var(--line); overflow:hidden; margin-top:4px }
 .bar > i { display:block; height:100% }
-svg text { fill:var(--muted); font-size:11px }
+svg text { fill:var(--muted); font-size:14px }
+.chartbox svg { font-size:14px }
+.chartbox { margin:14px 0 6px } .chartbox svg { display:block; max-height:62vh } .chartbox svg text { font-size:inherit }
 .close { float:right }
 .copyright { text-align:right; font-size:12.5px; color:var(--muted); margin:8px 0 0 }
 .disclaimer { font-size:12.5px; color:var(--muted); border-top:1px solid var(--line); padding-top:12px; margin-top:24px }
@@ -341,7 +343,8 @@ async function scanAtl(r) {
 }
 
 function chartSVG(r, liq) {
-  const k = r.k, W = 640, H = 260, P = { l: 52, r: 10, t: 10, b: 22 };
+  const small = innerWidth < 700;   // phones: fewer units across, so text and dots stay readable after scaling
+  const k = r.k, W = small ? 600 : 1100, H = small ? 520 : 440, P = small ? { l: 92, r: 14, t: 18, b: 40 } : { l: 70, r: 14, t: 14, b: 30 };
   const lo = Math.min(r.atl, liq > 0 ? liq : r.atl) * 0.85, hi = Math.max(...k.map((w) => w.h)) * 1.05;
   const x = (i) => P.l + (i / (k.length - 1)) * (W - P.l - P.r), y = (v) => P.t + (1 - (Math.log(v) - Math.log(lo)) / (Math.log(hi) - Math.log(lo))) * (H - P.t - P.b);
   const path = k.map((w, i) => (i ? "L" : "M") + x(i).toFixed(1) + "," + y(w.c).toFixed(1)).join("");
@@ -351,16 +354,16 @@ function chartSVG(r, liq) {
   const years = []; let py = null; k.forEach((w, i) => { const yv = new Date(w.t).getUTCFullYear(); if (yv !== py) { years.push([i, yv]); py = yv; } });
   const idxOf = (t) => k.findIndex((w) => w.t === t);
   const ns = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(ns, "svg"); svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("width", "100%");
+  const svg = document.createElementNS(ns, "svg"); svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("width", "100%"); if (small) svg.style.fontSize = "24px";
   svg.setAttribute("role", "img"); svg.setAttribute("aria-label", `${r.name} weekly price, log scale, with its Binance all-time low and your liquidation price`);
   let s = "";
-  ticks.forEach((v) => s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${P.l - 6}" y="${y(v) + 4}" text-anchor="end">${fmtP(v)}</text>`);
-  years.filter((_, i) => years.length < 9 || i % 2 === 0).forEach(([i, yv]) => s += `<text x="${x(i)}" y="${H - 6}" text-anchor="middle">${yv}</text>`);
+  ticks.forEach((v) => s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${P.l - 8}" y="${y(v) + 5}" text-anchor="end">${fmtP(v)}</text>`);
+  years.filter((_, i) => years.length < (small ? 6 : 9) || i % 2 === 0).forEach(([i, yv]) => s += `<text x="${x(i)}" y="${H - (small ? 10 : 8)}" text-anchor="middle">${yv}</text>`);
   s += `<path d="${lowPath}" fill="none" stroke="var(--muted)" stroke-width="1" opacity=".35"/>`;
-  s += `<path d="${path}" fill="none" stroke="var(--accent)" stroke-width="1.8"/>`;
-  r.rt.forEach((e) => { const i = idxOf(e.t); if (i >= 0) s += `<circle cx="${x(i)}" cy="${y(k[i].l)}" r="4.5" fill="${!e.done ? "var(--muted)" : e.held ? "var(--up)" : "var(--down)"}" stroke="var(--panel)" stroke-width="1.5"><title>${dateOf(e.t)}: retest ${!e.done ? "still in progress" : e.held ? "held" : "broke, fell " + Math.round(-e.depth * 100) + "% below it"}</title></circle>`; });
-  s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y(r.atl)}" y2="${y(r.atl)}" stroke="var(--text)" stroke-dasharray="6 4"/><text x="${W - P.r - 4}" y="${y(r.atl) - 5}" text-anchor="end" style="fill:var(--text)">ATL ${fmtP(r.atl)}</text>`;
-  if (liq > lo) s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y(liq)}" y2="${y(liq)}" stroke="var(--down)" stroke-dasharray="2 3" stroke-width="1.6"/><text x="${W - P.r - 4}" y="${y(liq) + 13}" text-anchor="end" style="fill:var(--down)">Liquidation ${fmtP(liq)}</text>`;
+  s += `<path d="${path}" fill="none" stroke="var(--accent)" stroke-width="${small ? 3 : 2.4}"/>`;
+  r.rt.forEach((e) => { const i = idxOf(e.t); if (i >= 0) s += `<circle cx="${x(i)}" cy="${y(k[i].l)}" r="${small ? 9 : 6.5}" fill="${!e.done ? "var(--muted)" : e.held ? "var(--up)" : "var(--down)"}" stroke="var(--panel)" stroke-width="1.5"><title>${dateOf(e.t)}: retest ${!e.done ? "still in progress" : e.held ? "held" : "broke, fell " + Math.round(-e.depth * 100) + "% below it"}</title></circle>`; });
+  s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y(r.atl)}" y2="${y(r.atl)}" stroke="var(--text)" stroke-width="1.4" stroke-dasharray="8 5"/><text x="${W - P.r - 4}" y="${y(r.atl) - (small ? 10 : 7)}" text-anchor="end" style="fill:var(--text);font-weight:600">ATL ${fmtP(r.atl)}</text>`;
+  if (liq > lo) s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y(liq)}" y2="${y(liq)}" stroke="var(--down)" stroke-dasharray="3 4" stroke-width="2"/><text x="${W - P.r - 4}" y="${y(liq) + (small ? 28 : 18)}" text-anchor="end" style="fill:var(--down);font-weight:600">Liquidation ${fmtP(liq)}</text>`;
   svg.innerHTML = s; return svg;
 }
 
@@ -474,13 +477,11 @@ function renderDetail() {
     el("button", { type: "button", class: "close", onclick: () => { box.hidden = true; state.sel = null; } }, ["✕ Close"]),
     el("h2", {}, [`${r.name} (${r.sym}) `, el("span", { class: "tag" }, [r.pair])]),
     el("p", { class: "note" }, [`Price ${fmtP(r.price)} · Binance ATL ${fmtP(r.atl)} on ${dateOf(r.atlT)} (${r.daysSince} days ago) · ${pct(r.dist)} above it · ${pct(r.fromAth)} from its high of ${fmtP(r.ath)} · on Binance since ${dateOf(r.listed)}`]),
-    el("div", { class: "dgrid" }, [
-      el("div", {}, [chartSVG(r, liq),
-        el("div", { class: "legendrow" }, [el("span", {}, [el("i", { style: "background:var(--accent)" }), "Weekly close (log scale)"]),
-          el("span", {}, [el("i", { style: "background:var(--up)" }), "Retest held"]), el("span", {}, [el("i", { style: "background:var(--down)" }), "Retest broke"])]),
-        el("h3", {}, ["Order book now"]), book]),
-      calc,
-    ]),
+    el("div", { class: "chartbox" }, [chartSVG(r, liq),
+      el("div", { class: "legendrow" }, [el("span", {}, [el("i", { style: "background:var(--accent)" }), "Weekly close (log scale)"]),
+        el("span", {}, [el("i", { style: "background:var(--up)" }), "Retest held"]), el("span", {}, [el("i", { style: "background:var(--down)" }), "Retest broke"]),
+        el("span", {}, [el("i", { style: "background:var(--text)" }), "ATL"]), el("span", {}, [el("i", { style: "background:var(--down)" }), "Your liquidation"])])]),
+    el("div", { class: "dgrid" }, [el("div", {}, [el("h3", {}, ["Order book now"]), book]), calc]),
     el("h3", {}, ["Orders waiting at the ATL"]), atlBox,
     el("h3", {}, ["Past ATL retests on this coin"]), rtTable,
     el("p", { class: "note" }, ["A retest is a week when the price came back within 10% of the ATL as it stood then (an ATL at least 4 weeks old). Held means no weekly low went under that ATL in the next 8 weeks."]),
