@@ -95,7 +95,7 @@ h2 { font-size:17px; margin:0 } h3 { font-size:15px; margin:18px 0 6px }
 "use strict";
 const BN = "https://data-api.binance.vision/api/v3";
 const CG = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=200&page=1";
-const STABLE = new Set("USDT USDC BUSD DAI TUSD FDUSD USDP USDD PYUSD USDE USDS FRAX LUSD GUSD EURC EURT AEUR USD1 RLUSD USDX USTC SUSD WBTC WETH STETH WSTETH WEETH RETH CBETH CBBTC BTCB WBETH PAXG XAUT BFUSD USDF BNSOL JITOSOL MSOL EZETH RSETH SOLVBTC".split(" "));
+const STABLE = new Set("USDT USDC BUSD DAI TUSD FDUSD USDP USDD PYUSD USDE USDS FRAX LUSD GUSD EURC EURT AEUR USD1 RLUSD USDX USTC SUSD U WBTC WETH STETH WSTETH WEETH RETH CBETH CBBTC BTCB WBETH PAXG XAUT BFUSD USDF BNSOL JITOSOL MSOL EZETH RSETH SOLVBTC".split(" "));
 const BINS = [
   { max: 0.10, name: "Within 10% of ATL", bg: "var(--h1)", fg: "#fff" },
   { max: 0.25, name: "10–25% above", bg: "var(--h2)", fg: "#fff" },
@@ -117,7 +117,7 @@ const dateOf = (ms) => new Date(ms).toISOString().slice(0, 10);
 function el(tag, attrs = {}, kids = []) {
   const e = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) { if (k === "style") e.style.cssText = v; else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v); }
-  for (const k of [].concat(kids)) e.append(k instanceof Node ? k : document.createTextNode(String(k)));
+  for (const k of [].concat(kids).flat(3)) e.append(k instanceof Node ? k : document.createTextNode(String(k)));
   return e;
 }
 async function getJSON(url, tries = 3) {
@@ -271,8 +271,9 @@ function render() { renderStats(); state.view === "hive" ? renderHive() : render
 // ---------- detail
 async function openDetail(pair) {
   const r = state.rows.find((x) => x.pair === pair); if (!r) return;
-  state.sel = { r, entry: r.price, buffer: 0.10, mmr: 0.01, lev: null, book: null };
+  state.sel = { r, entry: r.price, buffer: 0.10, mmr: 0.01, lev: null, book: null, atlx: null };
   $("detail").hidden = false; renderDetail(); $("detail").scrollIntoView({ behavior: "smooth", block: "start" });
+  scanAtl(r).then((x) => { if (state.sel && state.sel.r === r) { state.sel.atlx = x; renderDetail(); } });
   try {
     const d = await getJSON(`${BN}/depth?symbol=${pair}&limit=5000`);
     if (state.sel && state.sel.r === r) { state.sel.book = analyzeBook(d, r); renderDetail(); }
@@ -294,6 +295,47 @@ function analyzeBook(d, r) {
   const nearAtl = reachesAtl ? bids.filter(([p]) => p >= r.atl * 0.97 && p <= r.atl * 1.03).reduce((s, [, n]) => s + n, 0) : null;
   return { mid, lowest, bid2: within(bids, 0.02), ask2: within(asks, 0.02), bid5: within(bids, 0.05), ask5: within(asks, 0.05),
            walls, med, reachesAtl, nearAtl, depthPct: 1 - lowest / mid };
+}
+
+// ---------- orders at the ATL, across exchanges
+// Binance only sends the nearest 5,000 price levels, so for busy coins its book stops far above the ATL.
+// These exchanges send their full (or much deeper) public books, so we can see what is actually resting at the ATL.
+const KRAKEN = { BTC: "XBT", DOGE: "XDG" };
+const EXCH = [
+  { name: "Binance", cap: 5000, url: (s) => `${BN}/depth?symbol=${s}USDT&limit=5000`, bids: (j) => j.bids },
+  { name: "OKX", cap: 5000, url: (s) => `https://www.okx.com/api/v5/market/books-full?instId=${s}-USDT&sz=5000`, bids: (j) => j.data && j.data[0] && j.data[0].bids },
+  { name: "Coinbase", cap: Infinity, url: (s) => `https://api.exchange.coinbase.com/products/${s}-USD/book?level=2`, bids: (j) => j.bids },
+  { name: "Kraken", cap: 500, url: (s) => `https://api.kraken.com/0/public/Depth?pair=${KRAKEN[s] || s}USD&count=500`,
+    bids: (j) => (j.error && j.error.length) ? null : (Object.values(j.result || {})[0] || {}).bids },
+  { name: "Gate", cap: 1000, url: (s) => `https://api.gateio.ws/api/v4/spot/order_book?currency_pair=${s}_USDT&limit=1000`, bids: (j) => j.bids },
+];
+async function fetchQuick(url, ms = 15000) {
+  const ac = new AbortController(), t = setTimeout(() => ac.abort(), ms);
+  try { const r = await fetch(url, { signal: ac.signal }); return r.ok ? await r.json() : null; } finally { clearTimeout(t); }
+}
+function atlZone(raw, cap, r) {
+  const bids = raw.map((e) => [+e[0], +e[0] * +e[1]]).filter(([p, n]) => p > 0 && n > 0).sort((a, b) => b[0] - a[0]);
+  if (!bids.length) return null;
+  const lo = r.atl * 0.97, hi = r.atl * 1.03, top = bids[0][0], low = bids[bids.length - 1][0];
+  const complete = raw.length < cap;                 // fewer levels than the limit = we got the whole book
+  const cover = (complete || low <= lo) ? "full" : low <= hi ? "partial" : "none";
+  const zone = bids.filter(([p]) => p >= lo && p <= hi);
+  const zoneUsd = zone.reduce((t, [, n]) => t + n, 0), biggest = zone.reduce((m, [p, n]) => n > m.n ? { p, n } : m, { p: null, n: 0 });
+  // typical depth per 1% of price between the ATL zone and today's price (skipping the busy first 2% next to the price),
+  // to judge whether the ATL zone is unusual
+  const cap2 = top * 0.98, above = bids.filter(([p]) => p > hi && p < cap2), span = (cap2 / hi - 1) * 100;
+  const typical = span >= 3 && above.length ? above.reduce((t, [, n]) => t + n, 0) / span : null;
+  const mult = cover === "full" && typical ? (zoneUsd / 6) / typical : null;
+  return { cover, zoneUsd, biggest, mult, reachPct: 1 - low / top, complete };
+}
+async function scanAtl(r) {
+  return Promise.all(EXCH.map(async (x) => {
+    try {
+      const j = await fetchQuick(x.url(r.sym)); const raw = j && x.bids(j);
+      if (!raw || !raw.length) return { name: x.name, listed: false };
+      return { name: x.name, listed: true, ...atlZone(raw, x.cap, r) };
+    } catch (e) { return { name: x.name, listed: false, err: true }; }
+  }));
 }
 
 function chartSVG(r, liq) {
@@ -386,6 +428,36 @@ function renderDetail() {
     ]);
   }
 
+  const ax = S.atlx;
+  let atlBox;
+  if (!ax) atlBox = el("p", { class: "muted" }, ["Reading the order books of Binance, OKX, Coinbase, Kraken and Gate…"]);
+  else {
+    const seen = ax.filter((x) => x.listed), full = seen.filter((x) => x.cover === "full");
+    const tot = full.reduce((t, x) => t + x.zoneUsd, 0);
+    const big = full.reduce((m, x) => x.biggest.n > m.n ? { ...x.biggest, ex: x.name } : m, { n: 0 });
+    const unusual = full.filter((x) => x.mult != null && x.mult >= 2);
+    atlBox = el("div", {}, [
+      el("p", {}, full.length
+        ? [`Buy orders resting within 3% of the ATL (${fmtP(r.atl * 0.97)}–${fmtP(r.atl * 1.03)}) on ${full.length} exchange${full.length > 1 ? "s" : ""} that show that far down: `,
+           el("b", {}, [usd(tot)]), big.n ? ["; the largest single order is ", el("b", {}, [usd(big.n)]), ` on ${big.ex} at ${fmtP(big.p)}`] : "", "."]
+        : ["None of these exchanges shows its book all the way down to this coin's ATL right now."]),
+      el("p", { class: unusual.length ? "warn" : "muted" }, [unusual.length
+        ? `Unusual: on ${unusual.map((x) => `${x.name} (${x.mult.toFixed(1)}×)`).join(", ")} there is more buying lined up at the ATL than at a typical price level between here and the ATL.`
+        : full.length ? "Nothing unusual: the ATL zone holds about the same or less than a typical price level between here and the ATL." : ""]),
+      el("table", {}, [
+        el("thead", {}, [el("tr", {}, ["Exchange", "Sees the ATL?", "Bids within 3% of ATL", "Largest order there", "vs typical level"].map((h) => el("th", {}, [h])))]),
+        el("tbody", {}, ax.map((x) => el("tr", { style: "cursor:default" }, !x.listed
+          ? [el("td", {}, [x.name]), el("td", { class: "muted", colspan: "4" }, [x.err ? "not available" : `no ${r.sym} market`])]
+          : [el("td", {}, [x.name]),
+             el("td", { class: x.cover === "full" ? "up" : "muted" }, [x.cover === "full" ? "yes" : x.cover === "partial" ? "partly" : `no (book ends ${Math.round(x.reachPct * 100)}% down)`]),
+             el("td", {}, [x.cover === "none" ? "–" : usd(x.zoneUsd)]),
+             el("td", {}, [x.cover === "none" || !x.biggest.n ? "–" : `${usd(x.biggest.n)} at ${fmtP(x.biggest.p)}`]),
+             el("td", { class: x.mult >= 2 ? "warn" : "" }, [x.mult == null ? "–" : x.mult.toFixed(1) + "×"])]))),
+      ]),
+      el("p", { class: "note" }, ["Read live from each exchange's public order book in your browser. \"vs typical level\" compares the buying per 1% of price in the ATL zone with the average per 1% between the ATL and today's price (leaving out the busy 2% right next to the price): 2× or more is flagged as unusual. Coinbase and Kraken are USD markets, the rest USDT. Orders this far from the price are often placed or pulled at any time, so treat them as a snapshot, not a floor."]),
+    ]);
+  }
+
   const rtTable = r.rt.length ? el("table", {}, [
     el("thead", {}, [el("tr", {}, ["Retest week", "ATL then", "Outcome (8 weeks)", "Lowest vs ATL", "Return after 8w"].map((h) => el("th", {}, [h])))]),
     el("tbody", {}, [...r.rt].reverse().map((e) => el("tr", { style: "cursor:default" }, [
@@ -407,6 +479,7 @@ function renderDetail() {
         el("h3", {}, ["Order book now"]), book]),
       calc,
     ]),
+    el("h3", {}, ["Orders waiting at the ATL"]), atlBox,
     el("h3", {}, ["Past ATL retests on this coin"]), rtTable,
     el("p", { class: "note" }, ["A retest is a week when the price came back within 10% of the ATL as it stood then (an ATL at least 4 weeks old). Held means no weekly low went under that ATL in the next 8 weeks."]),
   );
