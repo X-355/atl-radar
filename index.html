@@ -123,6 +123,8 @@ const fmtP = (p) => p == null || !isFinite(p) ? "–" : p >= 1000 ? "$" + p.toLo
   : "$" + (p >= 1e-6 ? p.toPrecision(4) : p.toExponential(3));
 const pct = (x, d = 0) => { const v = Math.abs(x * 100).toFixed(d); return (+v === 0 ? "" : x >= 0 ? "+" : "−") + v + "%"; };
 const usd = (x) => x >= 1e9 ? "$" + (x / 1e9).toFixed(2) + "B" : x >= 1e6 ? "$" + (x / 1e6).toFixed(2) + "M" : x >= 1e3 ? "$" + (x / 1e3).toFixed(0) + "k" : "$" + x.toFixed(0);
+// short axis labels so big prices fit beside the chart on phones ($100k, not $100,000)
+const fmtAxis = (v) => v >= 1e6 ? "$" + +(v / 1e6).toFixed(1) + "M" : v >= 1e4 ? "$" + +(v / 1e3).toFixed(0) + "k" : fmtP(v);
 const dateOf = (ms) => new Date(ms).toISOString().slice(0, 10);
 function el(tag, attrs = {}, kids = []) {
   const e = document.createElement(tag);
@@ -366,7 +368,7 @@ function chartSVG(r, liq) {
   const svg = document.createElementNS(ns, "svg"); svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("width", "100%"); if (small) svg.style.fontSize = "24px";
   svg.setAttribute("role", "img"); svg.setAttribute("aria-label", `${r.name} weekly price, log scale, with its Binance all-time low and your liquidation price`);
   let s = "";
-  ticks.forEach((v) => s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${P.l - 8}" y="${y(v) + 5}" text-anchor="end">${fmtP(v)}</text>`);
+  ticks.forEach((v) => s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${P.l - 8}" y="${y(v) + 5}" text-anchor="end">${fmtAxis(v)}</text>`);
   years.filter((_, i) => years.length < (small ? 6 : 9) || i % 2 === 0).forEach(([i, yv]) => s += `<text x="${x(i)}" y="${H - (small ? 10 : 8)}" text-anchor="middle">${yv}</text>`);
   s += `<path d="${lowPath}" fill="none" stroke="var(--muted)" stroke-width="1" opacity=".35"/>`;
   s += `<path d="${path}" fill="none" stroke="var(--accent)" stroke-width="${small ? 3 : 2.4}"/>`;
