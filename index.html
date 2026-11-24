@@ -45,6 +45,7 @@ th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align:le
 th { color:var(--muted); font-weight:600; cursor:pointer; user-select:none; position:sticky; top:0; background:var(--panel) }
 tbody tr { cursor:pointer } tbody tr:hover { background:color-mix(in srgb, var(--accent) 7%, transparent) }
 .tablewrap { max-height:560px; overflow:auto; margin-top:12px }
+.tscroll { overflow-x:auto; -webkit-overflow-scrolling:touch }
 .pill { display:inline-block; padding:1px 8px; border-radius:99px; font-size:12px; font-weight:600; color:#fff }
 .up { color:var(--up) } .down { color:var(--down) } .warn { color:var(--warn) }
 #detail[hidden] { display:none }
@@ -120,7 +121,7 @@ const state = { rows: [], view: "hive", sort: { key: "dist", dir: 1 }, sel: null
 const fmtP = (p) => p == null || !isFinite(p) ? "–" : p >= 1000 ? "$" + p.toLocaleString("en-US", { maximumFractionDigits: 0 })
   : p >= 1 ? "$" + p.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   : "$" + (p >= 1e-6 ? p.toPrecision(4) : p.toExponential(3));
-const pct = (x, d = 0) => (x >= 0 ? "+" : "−") + Math.abs(x * 100).toFixed(d) + "%";
+const pct = (x, d = 0) => { const v = Math.abs(x * 100).toFixed(d); return (+v === 0 ? "" : x >= 0 ? "+" : "−") + v + "%"; };
 const usd = (x) => x >= 1e9 ? "$" + (x / 1e9).toFixed(2) + "B" : x >= 1e6 ? "$" + (x / 1e6).toFixed(2) + "M" : x >= 1e3 ? "$" + (x / 1e3).toFixed(0) + "k" : "$" + x.toFixed(0);
 const dateOf = (ms) => new Date(ms).toISOString().slice(0, 10);
 function el(tag, attrs = {}, kids = []) {
@@ -432,13 +433,13 @@ function renderDetail() {
         ? el("span", {}, ["The visible book reaches down to the ATL. Bids within 3% of the ATL: ", el("b", {}, [usd(bk.nearAtl)]), "."])
         : `Binance shows the top 5,000 bid levels, which only reach ${Math.round(bk.depthPct * 100)}% below the price. The ATL is ${Math.round((1 - r.atl / bk.mid) * 100)}% below the price, so orders sitting at the ATL aren't visible yet. They show up as the price gets closer.`]),
       el("h3", {}, ["Unusually large bids"]),
-      bk.walls.length ? el("table", {}, [
+      bk.walls.length ? el("div", { class: "tscroll" }, [el("table", {}, [
         el("thead", {}, [el("tr", {}, ["Price zone", "Size", "vs typical", "vs ATL"].map((h) => el("th", {}, [h])))]),
         el("tbody", {}, bk.walls.map((w) => el("tr", { style: "cursor:default" }, [
           el("td", {}, [`${fmtP(w.lo)}–${fmtP(w.hi)}`]), el("td", {}, [usd(w.n)]), el("td", {}, [w.mult.toFixed(1) + "×"]),
           el("td", { class: Math.abs(w.vsAtl) <= 0.03 ? "warn" : "" }, [Math.abs(w.vsAtl) <= 0.03 ? "at the ATL" : pct(w.vsAtl)]),
         ]))),
-      ]) : el("p", { class: "muted" }, ["No bid zone is more than 4× the typical size."]),
+      ])]) : el("p", { class: "muted" }, ["No bid zone is more than 4× the typical size."]),
       el("p", { class: "note" }, ["Bids are grouped into 0.5% price zones. A zone counts as unusual at 4× the median zone size. Big resting orders can be pulled at any moment, so a wall is a clue, not a floor."]),
     ]);
   }
@@ -461,7 +462,7 @@ function renderDetail() {
         : !full.length ? ""
         : full.every((x) => x.mult == null) ? "The price is too close to the ATL to compare the buying there with a typical level further up, so this can't say whether it is unusual."
         : "Nothing unusual: the ATL zone holds about the same or less than a typical price level between here and the ATL."]),
-      el("table", {}, [
+      el("div", { class: "tscroll" }, [el("table", {}, [
         el("thead", {}, [el("tr", {}, ["Exchange", "Sees the ATL?", "Bids within 3% of ATL", "Largest order there", "vs typical level"].map((h) => el("th", {}, [h])))]),
         el("tbody", {}, ax.map((x) => el("tr", { style: "cursor:default" }, !x.listed
           ? [el("td", {}, [x.name]), el("td", { class: "muted", colspan: "4" }, [x.err ? "not available" : `no ${r.sym} market`])]
@@ -470,12 +471,12 @@ function renderDetail() {
              el("td", {}, [x.cover === "none" ? "–" : usd(x.zoneUsd)]),
              el("td", {}, [x.cover === "none" || !x.biggest.n ? "–" : `${usd(x.biggest.n)} at ${fmtP(x.biggest.p)}`]),
              el("td", { class: x.mult >= 2 ? "warn" : "" }, [x.mult == null ? "–" : x.mult.toFixed(1) + "×"])]))),
-      ]),
+      ])]),
       el("p", { class: "note" }, ["Read live from each exchange's public order book in your browser. \"vs typical level\" compares the buying per 1% of price in the ATL zone with the average per 1% between the ATL and today's price (leaving out the busy 2% right next to the price): 2× or more is flagged as unusual. Coinbase and Kraken are USD markets, the rest USDT. Orders this far from the price are often placed or pulled at any time, so treat them as a snapshot, not a floor."]),
     ]);
   }
 
-  const rtTable = r.rt.length ? el("table", {}, [
+  const rtTable = r.rt.length ? el("div", { class: "tscroll" }, [el("table", {}, [
     el("thead", {}, [el("tr", {}, ["Retest week", "ATL then", "Outcome (8 weeks)", "Lowest vs ATL", "Return after 8w"].map((h) => el("th", {}, [h])))]),
     el("tbody", {}, [...r.rt].reverse().map((e) => el("tr", { style: "cursor:default" }, [
       el("td", {}, [dateOf(e.t)]), el("td", {}, [fmtP(e.atl)]),
@@ -483,7 +484,7 @@ function renderDetail() {
       el("td", {}, [e.done ? (e.depth < 0 ? pct(e.depth) : "stayed above") : "–"]),
       el("td", { class: e.ret8 == null ? "muted" : e.ret8 > 0 ? "up" : "down" }, [e.ret8 == null ? "–" : pct(e.ret8)]),
     ]))),
-  ]) : el("p", { class: "muted" }, ["The price hasn't come back near an older ATL yet."]);
+  ])]) : el("p", { class: "muted" }, ["The price hasn't come back near an older ATL yet."]);
 
   box.replaceChildren(
     el("button", { type: "button", class: "close", onclick: () => { box.hidden = true; state.sel = null; } }, ["✕ Close"]),

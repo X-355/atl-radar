@@ -126,7 +126,7 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
 <script>
 (function () {
   window.cbCoin = window.cbCoin || "ICP";
-  const pct = (v, d) => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(d) + "%";
+  const pct = (v, d) => { if (v == null) return "—"; const a = Math.abs(v).toFixed(d); return (+a === 0 ? "" : v > 0 ? "+" : "−") + a + "%"; };
   dash.draw("coin-pick", (sel) => {
     const r = dash.data("coin_breakdown");
     const rows = r.status === "ok" ? r.data : [];
@@ -251,7 +251,7 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
   <p class="cb-note" id="atl-depth-note">Order-book depth at the ATL is now tracked live: ATL Radar shows the buy orders waiting at each coin's ATL on five exchanges, and a daily snapshot of that market data (nothing about visitors) is saved so we can test later whether big walls make the ATL hold.</p>
 <script>
 (function () {
-  const pct = (v, d) => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(d) + "%";
+  const pct = (v, d) => { if (v == null) return "—"; const a = Math.abs(v).toFixed(d); return (+a === 0 ? "" : v > 0 ? "+" : "−") + a + "%"; };
   const num = (v, d) => v == null ? "—" : (v < 0 ? "−" : "") + Math.abs(v).toFixed(d);
   const one = (id, f) => { const r = dash.data(id); return r.status === "ok" && r.data.length ? f(r.data) : null; };
   const H1 = "H1 Capitulation: volume 2x+ and open interest down 10%+";
@@ -300,7 +300,7 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
     const y = d3.scaleBand().domain(rows.map((d) => d.feature)).range([M.t, H - M.b]).padding(0.2);
     const svg = d3.select(el).append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("width", "100%").attr("role", "img")
       .attr("aria-label", "For each measure, how strongly it was linked to the next 72 hours' return in 2022–2023 and in 2024 onward");
-    svg.append("g").attr("transform", `translate(0,${H - M.b})`).call(d3.axisBottom(x).ticks(5).tickSize(-(H - M.t - M.b)))
+    svg.append("g").attr("transform", `translate(0,${H - M.b})`).call(d3.axisBottom(x).ticks(W < 500 ? 3 : 5).tickSize(-(H - M.t - M.b)))
       .call((g) => g.select(".domain").remove()).call((g) => g.selectAll("line").style("stroke", "var(--cds-chart-grid)"));
     svg.append("line").attr("x1", x(0)).attr("x2", x(0)).attr("y1", M.t).attr("y2", H - M.b).style("stroke", "var(--cds-chart-reference)");
     svg.append("g").selectAll("text").data(rows).join("text").attr("x", M.l - 8).attr("y", (d) => y(d.feature) + y.bandwidth() / 2 + 4)
@@ -336,7 +336,7 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
   <p class="cb-note" id="copyright" style="text-align:right;max-width:none;margin-top:var(--cds-gap-xl)">© <span id="cy">2026</span> CoinTelescope. All Rights Reserved.</p>
 <script>
 (function () {
-  const fmtPct = (v, d) => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(d) + "%";
+  const fmtPct = (v, d) => { if (v == null) return "—"; const a = Math.abs(v).toFixed(d); return (+a === 0 ? "" : v > 0 ? "+" : "−") + a + "%"; };
   const fmtNum = (v, d) => v == null ? "—" : (v < 0 ? "−" : "") + Math.abs(v).toFixed(d);
   const one = (id, pick) => { const r = dash.data(id); return r.status === "ok" ? pick(r.data) : null; };
   const testRow = (m, w) => one("spot_tests", (rows) => rows.find((x) => x.metric === m && x.window === w));
