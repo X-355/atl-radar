@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Crypto Bottoms Lab · CoinTelescope</title>
 <meta name="description" content="What big orders, ATL retests and futures data say about crypto bottoms: tested on years of Binance data.">
-<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <style>
 :root { --bg:#f1f1ef; --panel:#fff; --line:#deded9; --text:#23262d; --muted:#5a5f69; --accent:#2563eb; --up:#0b9b5c; --down:#e02424; --warn:#b36b00;
   --series-1:#2563eb; --series-2:#e8590c; --series-3:#8a909c; }
@@ -112,8 +112,8 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
 <main>
 <div class="cb">
 
-  <p class="cb-lede" id="takeaway">Around <b data-draw="s-bottoms" data-source="spot_summary" data-field="bottoms" data-row="0">—</b> price bottoms on <b data-draw="s-coins" data-source="spot_summary" data-field="coins" data-row="0">—</b> coins, big orders were <b>sellers, not buyers</b>, before the low. The clearest sign of a real bottom was a burst of volume on the day itself: <b data-draw="t-vol-b" data-source="spot_tests" data-field="bottom" data-where="metric=relvol&amp;window=Bottom day">—</b> above normal, against <b data-draw="t-vol-k" data-source="spot_tests" data-field="falling_knife" data-where="metric=relvol&amp;window=Bottom day">—</b> on falling-knife days.</p>
-  <p class="cb-note">Today's top-30 coins on Binance plus ICP and BSV (BSV uses Binance futures data, as it has no Binance spot market), <span data-draw="s-first" data-source="spot_summary" data-field="first_date" data-row="0">—</span> to <span data-draw="s-last" data-source="spot_summary" data-field="last_date" data-row="0">—</span>. Research, not financial advice.</p>
+  <p class="cb-lede" id="takeaway">Around <b data-draw="s-bottoms" data-source="spot_summary" data-field="bottoms" data-row="0">—</b> price bottoms on <b data-draw="s-coins" data-source="spot_summary" data-field="coins" data-row="0">—</b> coins, big orders were <b data-draw="s-side">sellers, not buyers</b>, before the low. The clearest sign of a real bottom was a burst of volume on the day itself: <b data-draw="t-vol-b" data-source="spot_tests" data-field="bottom" data-where="metric=relvol&amp;window=Bottom day">—</b> above normal, against <b data-draw="t-vol-k" data-source="spot_tests" data-field="falling_knife" data-where="metric=relvol&amp;window=Bottom day">—</b> on falling-knife days.</p>
+  <p class="cb-note"><span data-draw="s-top">—</span> coins from today's top 30 on Binance, plus ICP and BSV (BSV uses Binance futures data, as it has no Binance spot market), <span data-draw="s-first" data-source="spot_summary" data-field="first_date" data-row="0">—</span> to <span data-draw="s-last" data-source="spot_summary" data-field="last_date" data-row="0">—</span>. Research, not financial advice.</p>
 
   <div class="cb-card" id="coin-card">
     <div class="cb-row">
@@ -227,11 +227,11 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
   <p class="cb-note">Retests that held had more $100k+ orders in the mix, while many that broke had none at all. With this few retests that isn't statistically solid yet, and it may simply reflect coin size: small coins in 2018–2019 rarely saw $100k orders.</p>
 
   <h2 id="futures">3 · Futures signals: built on 2022–2023, tested on 2024 onward</h2>
-  <p class="cb-lede" id="futures-takeaway"><b>None of the five signals held up.</b> Each one was set before looking at results, then traded on the 2024-onward data it had never seen. None of them beat buying on a random day by more than luck would explain.</p>
+  <p class="cb-lede" id="futures-takeaway" data-draw="futures-take"><b>None of the five signals held up.</b> Each one was set before looking at results, then traded on the 2024-onward data it had never seen. None of them beat buying on a random day by more than luck would explain.</p>
   <p class="cb-note">A <b>possible-bottom day</b> is any day a coin's perpetual future is at least <span data-draw="f-dd">—</span> below its 30-day high, judged at 00:00 UTC with only past data. A trade buys at the next hour's open and holds <span data-draw="f-hold">—</span> hours, with an <span data-draw="f-stop">—</span> stop-loss, <span data-draw="f-fee">—</span> fee each way and funding paid. Results are at 1× (no leverage).</p>
   <div class="cb-tiles" id="futures-tiles">
     <div class="cb-tile"><div class="cb-k">Possible-bottom days tested</div><b class="cb-v" data-draw="f-n">—</b><div class="cb-s">on <span data-draw="f-coins">—</span> coins, <span data-draw="f-first">—</span> to <span data-draw="f-last">—</span></div></div>
-    <div class="cb-tile"><div class="cb-k">Capitulation (H1), average per trade</div><b class="cb-v" data-draw="f-h1-test">—</b><div class="cb-s">from 2024 · but <span data-draw="f-h1-train">—</span> in 2022–23, so it flipped</div></div>
+    <div class="cb-tile"><div class="cb-k">Capitulation (H1), average per trade</div><b class="cb-v" data-draw="f-h1-test">—</b><div class="cb-s" data-draw="f-h1-sub">from 2024 · <span data-draw="f-h1-train">—</span> in 2022–23</div></div>
     <div class="cb-tile"><div class="cb-k">Capitulation trades liquidated at 5×, 2022–23</div><b class="cb-v" data-draw="f-h1-liq">—</b><div class="cb-s">buying the flush with leverage is where accounts die</div></div>
   </div>
   <h3 id="futures-table-h">Every signal, train vs test</h3>
@@ -266,7 +266,14 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
   t("f-last", () => one("futures_summary", (r) => r[0].last_date));
   t("f-h1-test", () => one("futures_signals", (r) => { const x = r.find((q) => q.signal === H1); return x ? pct(x.test_avg_net_pct, 2) : null; }));
   t("f-h1-train", () => one("futures_signals", (r) => { const x = r.find((q) => q.signal === H1); return x ? pct(x.train_avg_net_pct, 2) : null; }));
+  dash.draw("f-h1-sub", (el) => { const x = one("futures_signals", (r) => r.find((q) => q.signal === H1)); if (!x) return;
+    const flip = (x.train_avg_net_pct < 0) !== (x.test_avg_net_pct < 0);
+    el.textContent = "from 2024 · " + (flip ? "but " : "") + pct(x.train_avg_net_pct, 2) + " in 2022–23" + (flip ? ", so it flipped" : ""); });
   t("f-h1-liq", () => one("futures_signals", (r) => { const x = r.find((q) => q.signal === H1); return x ? x.train_liq5x_pct + "%" : null; }));
+  dash.draw("futures-take", (el) => { const sig = one("futures_signals", (r) => r.filter((q) => /^H\d/.test(q.signal))); if (!sig) return;
+    const good = sig.filter((q) => q.test_t >= 2 && q.test_avg_net_pct > 0);
+    if (good.length) el.innerHTML = "<b>" + good.length + " of the " + sig.length + " signals beat random days in 2024 onward.</b> Each one was set before looking at results, then traded on data it had never seen. See the table for which.";
+    else el.innerHTML = "<b>None of the " + (sig.length === 5 ? "five" : sig.length) + " signals held up.</b> Each one was set before looking at results, then traded on the 2024-onward data it had never seen. None of them beat buying on a random day by more than luck would explain."; });
   ["sw-ic0", "sw-ic1"].forEach((n, i) => dash.draw(n, (el) => { el.style.background = dash.colors[i]; }));
   dash.draw("futures-rows", (tb) => {
     const r = dash.data("futures_signals"); tb.replaceChildren();
@@ -321,13 +328,12 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
     <summary>How this was measured, and what to keep in mind</summary>
     <p>Data: Binance's public archive. Daily candles for prices; every executed trade (aggTrades) for the days around each event, with fills from the same taker order in the same millisecond merged into one order. Order sizes are in US dollars at the trade price.</p>
     <p>"Big orders" are executed market orders, not resting limit orders. Institutions that buy with limit orders would not show up here; order-book depth (futures section) is the test for that.</p>
-    <p>Survivorship: the study covers today's top 30 coins plus ICP and BSV, all of which are still trading, so mostly coins that recovered. BSV's numbers come from Binance futures, where its data starts in October 2023. Coins that collapsed and left the list are missing, which makes bottoms and ATL retests look better than they were.</p>
+    <p>Survivorship: the spot and ATL study covers coins from today's top 30 plus ICP and BSV (the futures section uses its own list of coins with Binance perpetuals), all of which are still trading, so mostly coins that recovered. BSV's numbers come from Binance futures, where its data starts in October 2023. Coins that collapsed and left the list are missing, which makes bottoms and ATL retests look better than they were.</p>
     <p>Part of the "selling before the low" is mechanical, since the last days before a low are usually down days. The falling-knife comparison controls for some, not all, of that.</p>
     <p>The ATL is the lowest price since the coin listed on Binance, not its all-time low everywhere.</p>
   </details>
 </div>
   <p class="cb-note" id="copyright" style="text-align:right;max-width:none;margin-top:var(--cds-gap-xl)">© <span id="cy">2026</span> CoinTelescope. All Rights Reserved.</p>
-</div>
 <script>
 (function () {
   const fmtPct = (v, d) => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(d) + "%";
@@ -341,6 +347,8 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
   text("s-coins", () => one("spot_summary", (r) => r[0].coins));
   text("s-first", () => one("spot_summary", (r) => r[0].first_date));
   text("s-last", () => one("spot_summary", (r) => r[0].last_date));
+  text("s-top", () => one("spot_summary", (r) => r[0].coins - 2));
+  text("s-side", () => { const r = testRow("netflow_100k", "3 days before"); return r ? (r.bottom < 0 ? "sellers, not buyers" : "buyers, not sellers") : "sellers, not buyers"; });
   const tv = (m, w, f, d) => () => { const r = testRow(m, w); return r ? (f === "auc_vs_knife" ? r[f].toFixed(2) : fmtPct(r[f], d)) : null; };
   text("t-vol-b", tv("relvol", "Bottom day", "bottom", 0));
   text("t-vol-k", tv("relvol", "Bottom day", "falling_knife", 0));

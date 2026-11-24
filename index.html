@@ -89,7 +89,7 @@ h2 { font-size:17px; margin:0 } h3 { font-size:15px; margin:18px 0 6px }
     <div class="stats" id="stats"></div>
     <div id="viewHive"></div>
     <div id="viewTable" hidden></div>
-    <p class="note">ATL here is the lowest price since the coin listed on Binance (USDT pair), read from weekly candles. That can be above the coin's true all-time low on other exchanges. The listing week and flash-crash wicks more than 50% below a week's open or close are ignored. Tap a coin for its chart, a liquidation calculator and the order book near its ATL. Retests here use weekly candles on all the coins shown, so the counts differ from the Research Lab, which uses daily data on a fixed set of coins.</p>
+    <p class="note">ATL here is the lowest price since the coin listed on Binance (USDT pair), read from weekly candles. That can be above the coin's true all-time low on other exchanges. Wicks in the listing week, and flash-crash wicks more than 50% below a week's open or close, are ignored. Tap a coin for its chart, a liquidation calculator and the order book near its ATL. Retests here use weekly candles on all the coins shown, so the counts differ from the Research Lab, which uses daily data on a fixed set of coins.</p>
   </section>
 
   <section class="card" id="detail" hidden></section>
@@ -241,7 +241,7 @@ function renderHive() {
   hive.style.cssText = `width:${cols * hw + hw / 2}px;height:${(nrows - 1) * hh * 0.75 + hh}px;max-width:100%`;
   rows.forEach((r, i) => {
     const rr = Math.floor(i / cols), cc = (i % cols) + (rr === nrows - 1 && lastN ? Math.floor(padL) : 0), b = binOf(r.dist);
-    const cell = el("button", { type: "button", class: "hex", title: `${r.name}: ${pct(r.dist)} above its Binance ATL of ${fmtP(r.atl)} (${dateOf(r.atlT)})`,
+    const cell = el("button", { type: "button", class: "hex", title: `${r.name}: ${pct(r.dist)} above its Binance ATL of ${fmtP(r.atl)} (week of ${dateOf(r.atlT)})`,
       "aria-label": `${r.name}, ${Math.round(r.dist * 100)} percent above its all-time low`, onclick: () => openDetail(r.pair) },
       [el("span", { class: "hs" }, [r.sym.slice(0, 6)]), el("span", { class: "hp" }, [r.dist < 10 ? pct(r.dist) : (r.dist + 1).toFixed(0) + "×"])]);
     cell.style.cssText = `left:${cc * hw + (rr % 2) * hw / 2}px;top:${rr * hh * 0.75}px;width:${hw - 3}px;height:${hh - 3}px;background:${b.bg};color:${b.fg};font-size:${hw / 5.6}px`;
@@ -254,7 +254,7 @@ function renderHive() {
 
 const COLS = [
   ["sym", "Coin"], ["name", "Name"], ["price", "Price"], ["atl", "Binance ATL"], ["dist", "Above ATL"],
-  ["daysSince", "Days since ATL"], ["fromAth", "From ATH"], ["lev", "Max lev. (liq 10% under ATL)"], ["held", "Past retests held"],
+  ["daysSince", "Days since ATL week"], ["fromAth", "From ATH"], ["lev", "Max lev. (liq 10% under ATL)"], ["held", "Past retests held"],
 ];
 function renderTable() {
   const s = state.sort, mmr = 0.01;
@@ -275,7 +275,7 @@ function renderTable() {
     ]);
   }));
   $("viewTable").replaceChildren(el("div", { class: "tablewrap" }, [el("table", {}, [thead, tbody])]),
-    el("p", { class: "note" }, ["Max lev. = the highest leverage whose liquidation price would sit 10% below the ATL if you bought now (1% maintenance margin). Past retests = times the price came back within 10% of the ATL as it stood then, and whether it stayed above it for the next 8 weeks."]));
+    el("p", { class: "note" }, ["Max lev. = the highest leverage whose liquidation price would sit 10% below the ATL if you bought now (1% maintenance margin). Past retests = times the price came back within 10% of the ATL as it stood then, and whether it stayed above it that week and for the next 8 weeks."]));
 }
 function render() { renderStats(); state.view === "hive" ? renderHive() : renderTable(); }
 
@@ -481,22 +481,22 @@ function renderDetail() {
       el("td", {}, [dateOf(e.t)]), el("td", {}, [fmtP(e.atl)]),
       el("td", { class: !e.done ? "muted" : e.held ? "up" : "down" }, [!e.done ? "in progress" : e.held ? "Held" : "Broke"]),
       el("td", {}, [e.done ? (e.depth < 0 ? pct(e.depth) : "stayed above") : "–"]),
-      el("td", { class: e.ret8 > 0 ? "up" : "down" }, [e.ret8 == null ? "–" : pct(e.ret8)]),
+      el("td", { class: e.ret8 == null ? "muted" : e.ret8 > 0 ? "up" : "down" }, [e.ret8 == null ? "–" : pct(e.ret8)]),
     ]))),
   ]) : el("p", { class: "muted" }, ["The price hasn't come back near an older ATL yet."]);
 
   box.replaceChildren(
     el("button", { type: "button", class: "close", onclick: () => { box.hidden = true; state.sel = null; } }, ["✕ Close"]),
     el("h2", {}, [`${r.name} (${r.sym}) `, el("span", { class: "tag" }, [r.pair])]),
-    el("p", { class: "note" }, [`Price ${fmtP(r.price)} · Binance ATL ${fmtP(r.atl)} on ${dateOf(r.atlT)} (${r.daysSince === 0 ? "today" : r.daysSince === 1 ? "1 day ago" : r.daysSince + " days ago"}) · ${pct(r.dist)} above it · ${pct(r.fromAth)} from its high of ${fmtP(r.ath)} · on Binance since ${dateOf(r.listed)}`]),
+    el("p", { class: "note" }, [`Price ${fmtP(r.price)} · Binance ATL ${fmtP(r.atl)} in the week of ${dateOf(r.atlT)}${r.daysSince < 7 ? " (this week)" : ""} · ${pct(r.dist)} above it · ${pct(r.fromAth)} from its high of ${fmtP(r.ath)} · on Binance since ${dateOf(r.listed)}`]),
     el("div", { class: "chartbox" }, [chartSVG(r, liq),
       el("div", { class: "legendrow" }, [el("span", {}, [el("i", { style: "background:var(--accent)" }), "Weekly close (log scale)"]),
         el("span", {}, [el("i", { style: "background:var(--up)" }), "Retest held"]), el("span", {}, [el("i", { style: "background:var(--down)" }), "Retest broke"]),
-        el("span", {}, [el("i", { style: "background:var(--text)" }), "ATL"]), el("span", {}, [el("i", { style: "background:var(--down)" }), "Your liquidation"])])]),
+        el("span", {}, [el("i", { style: "background:var(--text)" }), "ATL"]), lev > 1 ? el("span", {}, [el("i", { style: "background:var(--down)" }), "Your liquidation"]) : ""])]),
     el("div", { class: "dgrid" }, [el("div", {}, [el("h3", {}, ["Order book now"]), book]), calc]),
     el("h3", {}, ["Orders waiting at the ATL"]), atlBox,
     el("h3", {}, ["Past ATL retests on this coin"]), rtTable,
-    el("p", { class: "note" }, ["A retest is a week when the price came back within 10% of the ATL as it stood then (an ATL at least 4 weeks old). Held means no weekly low went under that ATL in the next 8 weeks."]),
+    el("p", { class: "note" }, ["A retest is a week when the price came back within 10% of the ATL as it stood then (an ATL at least 4 weeks old). Held means no weekly low went under that ATL in the retest week or the 8 weeks after it."]),
   );
 }
 
