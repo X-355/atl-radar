@@ -209,7 +209,7 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
     <p class="cb-note">Each dot is one retest. A dot at 0 held; a dot at −30% means price fell 30% under the ATL within 30 days, which is how far below the ATL a liquidation had to sit to survive.</p>
   </div>
 
-  <h3 id="strat-h">How the trade would have done (30-day hold, fees and funding included)</h3>
+  <h3 id="strat-h">How the trade would have done (30-day hold, fees and an assumed funding cost included)</h3>
   <div class="cb-scroll">
     <table id="strat-table" data-source="atl_strategies" data-row-key="setup">
       <thead><tr><th data-field="setup" class="cb-l">Setup</th><th data-field="leverage">Leverage</th><th data-field="survived_pct" class="cb-l">Not liquidated</th><th data-field="avg_return_pct">Avg return on margin</th><th data-field="median_return_pct">Median</th><th data-field="win_pct">Profitable</th></tr></thead>
