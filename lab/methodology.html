@@ -57,7 +57,7 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
     <li>A <b>bottom</b> is the lowest price within 14 days either side, at least 30% below the prior 90-day high, and followed by a 25% rally.</li>
     <li>Each bottom is compared with a <b>falling knife</b> on the same coin (also down 30%, but the price kept falling at least another 10%) and with a <b>random day</b>.</li>
     <li>Every measure is relative to that coin's normal level, so 0 means a typical day for that coin. Volume is in % above normal, net buying in % of all volume, and buying shares in percentage points.</li>
-    <li><b>p vs knives</b> is the chance of seeing a gap this large between bottoms and falling knives if there were really no difference. Small values (below about 0.05) mean the gap is unlikely to be luck.</li>
+    <li><b>p vs knives</b> comes from a Mann-Whitney test, which compares the two groups by rank rather than by average. It is the chance of seeing a gap this large between bottoms and falling knives if there were really no difference. Small values (below about 0.05) mean the gap is unlikely to be luck. The p in the "Did big orders show up at retests that held?" table is the same test, comparing retests that held with ones that broke.</li>
     <li><b>Separation</b> is the chance that a real bottom scores higher than a falling knife on that measure: 0.5 is a coin flip, and below 0.5 means bottoms score lower.</li>
     <li>The days after the low are partly built in, because a bottom is defined by the rally that follows. Part of the selling before the low is also mechanical, since the last days before a low are usually down days; the falling-knife comparison controls for some, not all, of that.</li>
   </ul>
@@ -68,7 +68,8 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
   <ul>
     <li>The <b>ATL</b> is the lowest price since the coin listed on Binance, not its all-time low everywhere.</li>
     <li>A <b>retest</b> is a day when the price came back within 10% of the ATL, where that ATL was set at least 30 days earlier. Outcomes are measured over the next 30 days: <b>held</b> means the price never traded below the ATL in that time.</li>
-    <li><b>How the trade would have done:</b> a long opened on the retest day and held 30 days, with fees and funding included. Each setup either places the liquidation a set distance below the ATL (which fixes the leverage) or uses a fixed leverage. A liquidated position counts as −100%.</li>
+    <li><b>How the trade would have done:</b> a long opened at the retest day's daily close and closed at the daily close 30 days later. Costs are a 0.05% fee each way plus funding at a typical 0.01% every 8 hours (about 0.9% over 30 days), not the funding actually charged at the time. Each setup either places the liquidation a set distance below the ATL (which fixes the leverage, capped at 125×) or uses a fixed leverage, with a 1% maintenance margin.</li>
+    <li>A position is liquidated if any daily low in the 30 days reaches its liquidation price, and then counts as −100% of the margin. Because only daily lows are checked, a wick inside a day counts, but the order of moves within a day does not.</li>
     <li>Averages are pulled up by a few big winners, so the median and the share profitable show a typical trade better.</li>
   </ul>
   <p class="muted">ATL Radar also counts retests, but from weekly candles with an 8-week window on the coins it shows, so its numbers differ from these.</p>
