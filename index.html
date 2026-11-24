@@ -16,6 +16,8 @@ body { margin:0; background:var(--bg); color:var(--text); font:15px/1.45 system-
 header { display:flex; align-items:center; gap:12px; padding:14px 20px; border-bottom:1px solid var(--line); background:var(--panel); position:sticky; top:0; z-index:5 }
 header h1 { font-size:19px; margin:0 } header .sub { color:var(--muted); font-size:13px }
 header .sp { flex:1 }
+header { flex-wrap:wrap } header > div:first-child { flex:1 1 300px; min-width:0 }
+header button, header .navlink { white-space:nowrap }
 button, select, input { font:inherit; color:var(--text); background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:6px 10px }
 button { cursor:pointer }
 .navlink { color:var(--text); background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:6px 10px; text-decoration:none } .navlink:hover { border-color:var(--accent) } button:hover { border-color:var(--accent) }
@@ -25,7 +27,7 @@ main { max-width:1180px; margin:0 auto; padding:18px 20px 60px }
 .note { color:var(--muted); font-size:13.5px; margin:6px 0 0 }
 .muted { color:var(--muted) }
 .row { display:flex; flex-wrap:wrap; gap:10px; align-items:center }
-.stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:10px; margin-top:12px }
+.stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:12px } @media (max-width:640px){ .stats { grid-template-columns:repeat(2,1fr) } }
 .stat { border:1px solid var(--line); border-radius:10px; padding:10px 12px }
 .stat b { display:block; font-size:22px } .stat span { color:var(--muted); font-size:12.5px }
 .hivewrap { overflow:hidden; margin-top:14px }
@@ -115,7 +117,7 @@ const state = { rows: [], view: "hive", sort: { key: "dist", dir: 1 }, sel: null
 // ---------- helpers
 const fmtP = (p) => p == null || !isFinite(p) ? "–" : p >= 1000 ? "$" + p.toLocaleString(undefined, { maximumFractionDigits: 0 })
   : p >= 10 ? "$" + p.toLocaleString(undefined, { maximumFractionDigits: 2 }) : p >= 1 ? "$" + p.toLocaleString(undefined, { maximumFractionDigits: 3 }) : "$" + Number(p.toPrecision(4));
-const pct = (x, d = 0) => (x >= 0 ? "+" : "") + (x * 100).toFixed(d) + "%";
+const pct = (x, d = 0) => (x >= 0 ? "+" : "−") + Math.abs(x * 100).toFixed(d) + "%";
 const usd = (x) => x >= 1e9 ? "$" + (x / 1e9).toFixed(2) + "B" : x >= 1e6 ? "$" + (x / 1e6).toFixed(2) + "M" : x >= 1e3 ? "$" + (x / 1e3).toFixed(0) + "k" : "$" + x.toFixed(0);
 const dateOf = (ms) => new Date(ms).toISOString().slice(0, 10);
 function el(tag, attrs = {}, kids = []) {
@@ -345,8 +347,9 @@ async function scanAtl(r) {
 }
 
 function chartSVG(r, liq) {
-  const small = innerWidth < 700;   // phones: fewer units across, so text and dots stay readable after scaling
-  const k = r.k, W = small ? 600 : 1100, H = small ? 520 : 440, P = small ? { l: 92, r: 14, t: 18, b: 40 } : { l: 70, r: 14, t: 14, b: 30 };
+  // size the drawing to the space it gets, so text stays ~14px at any width; phones get their own layout
+  const cw = ((document.getElementById("detail") || {}).clientWidth || innerWidth) - 40, small = cw < 560;
+  const k = r.k, W = small ? 600 : Math.round(Math.min(1100, Math.max(560, cw))), H = small ? 520 : Math.round(Math.max(340, Math.min(440, W * 0.4))), P = small ? { l: 92, r: 14, t: 18, b: 40 } : { l: 70, r: 14, t: 14, b: 30 };
   const lo = Math.min(r.atl, liq > 0 ? liq : r.atl) * 0.85, hi = Math.max(...k.map((w) => w.h)) * 1.05;
   const x = (i) => P.l + (i / (k.length - 1)) * (W - P.l - P.r), y = (v) => P.t + (1 - (Math.log(v) - Math.log(lo)) / (Math.log(hi) - Math.log(lo))) * (H - P.t - P.b);
   const path = k.map((w, i) => (i ? "L" : "M") + x(i).toFixed(1) + "," + y(w.c).toFixed(1)).join("");

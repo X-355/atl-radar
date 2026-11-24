@@ -12,7 +12,7 @@
 [data-theme="dark"] { --bg:#14161b; --panel:#1d2027; --line:#2f333c; --text:#e8e9ec; --muted:#a2a7b2; --accent:#6ea0ff; --up:#34c38f; --down:#ff6b6b; --warn:#f0a43a;
   --series-1:#6ea0ff; --series-2:#ff9a4d; --series-3:#8a909c; }
 :root {
-  --font-anthropic-sans: system-ui, -apple-system, "Segoe UI", sans-serif; --font-anthropic-serif: Georgia, "Times New Roman", serif;
+  --font-anthropic-sans: system-ui, -apple-system, "Segoe UI", sans-serif; --font-anthropic-serif: system-ui, -apple-system, "Segoe UI", sans-serif;
   --color-fg: var(--text); --color-fg-muted: var(--muted); --color-panel: var(--panel); --color-border-line: var(--line);
   --color-ok: var(--up); --color-bad: var(--down); --color-warn: var(--warn);
   --cds-font-size-title: 30px; --cds-font-size-heading: 21px; --cds-font-size-body: 15.5px; --cds-font-size-caption: 13.5px; --cds-font-weight-medium: 600;
@@ -32,6 +32,19 @@ main { max-width:1140px; margin:0 auto; padding:22px 20px 40px }
 .cb svg text { font-size:12px }
 .cb .tick text { fill: var(--muted) }
 #upd { color:var(--muted); font-size:13px }
+/* audit fixes */
+.cb h1, .cb-tile .cb-v { font-weight:600 }
+.cb-tile .cb-v { font-size:28px; letter-spacing:-0.01em }
+.cb-tile { display:flex; flex-direction:column }
+@media (min-width:700px) { .cb-tile .cb-k { min-height:2.9em } }
+.cb-row h3 { flex:1 1 220px !important }
+.cb .tick text { font-variant-numeric: tabular-nums }
+@media (max-width:700px) {
+  .cb td.cb-l, .cb th.cb-l { white-space:normal; min-width:170px; max-width:240px }
+  header nav { margin-left:0; width:100% }
+}
+header button svg { width:14px; height:14px; vertical-align:-2px; margin-right:4px }
+
 
 .cb { font-family: var(--font-anthropic-sans); color: var(--color-fg); max-width: 1100px; }
 .cb h1 { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0 0 var(--cds-gap-xs); }
@@ -94,7 +107,7 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
 <body>
 <header>
   <div><h1>Crypto Bottoms Lab</h1><div class="sub">What big orders, ATL retests and futures data say about crypto bottoms</div></div>
-  <nav><span id="upd"></span><a href="../">ATL Radar</a><button type="button" id="theme">◐ Theme</button></nav>
+  <nav><span id="upd"></span><a href="../">ATL Radar</a><button type="button" id="theme"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg>Theme</button></nav>
 </header>
 <main>
 <div class="cb">
@@ -274,7 +287,7 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
     if (r.status !== "ok") { el.textContent = r.status === "error" ? "Couldn't load these results." : "—"; return; }
     el.replaceChildren();
     const rows = r.data.filter((d) => d.train_ic != null || d.test_ic != null);
-    const W = Math.max(280, el.clientWidth || 600), rowH = 30, M = { t: 8, r: 16, b: 26, l: Math.min(250, W * 0.42) }, H = M.t + M.b + rows.length * rowH;
+    const W = Math.max(280, el.clientWidth || 600), rowH = 30, M = { t: 8, r: 16, b: 26, l: W < 500 ? W * 0.64 : Math.min(250, W * 0.42) }, H = M.t + M.b + rows.length * rowH;
     const lim = Math.max(0.15, d3.max(rows, (d) => Math.max(Math.abs(d.train_ic || 0), Math.abs(d.test_ic || 0))));
     const x = d3.scaleLinear().domain([-lim, lim]).nice().range([M.l, W - M.r]);
     const y = d3.scaleBand().domain(rows.map((d) => d.feature)).range([M.t, H - M.b]).padding(0.2);
@@ -284,7 +297,7 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
       .call((g) => g.select(".domain").remove()).call((g) => g.selectAll("line").style("stroke", "var(--cds-chart-grid)"));
     svg.append("line").attr("x1", x(0)).attr("x2", x(0)).attr("y1", M.t).attr("y2", H - M.b).style("stroke", "var(--cds-chart-reference)");
     svg.append("g").selectAll("text").data(rows).join("text").attr("x", M.l - 8).attr("y", (d) => y(d.feature) + y.bandwidth() / 2 + 4)
-      .attr("text-anchor", "end").text((d) => d.feature);
+      .attr("text-anchor", "end").style("font-size", W < 500 ? "10px" : null).text((d) => d.feature);
     const bh = y.bandwidth() / 2;
     const tip = document.createElement("div"); tip.className = "cb-tip"; tip.hidden = true; el.append(tip);
     [["train_ic", 0], ["test_ic", 1]].forEach(([k, i]) => {
@@ -408,7 +421,7 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
     const y = d3.scaleLinear().domain(d3.extent([0, ...vals])).nice().range([H - M.b, M.t]);
     const svg = d3.select(el).append("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("width", "100%").attr("role", "img")
       .attr("aria-label", "Average of the chosen measure for each day from 3 days before to 3 days after the low, for real bottoms, falling knives and random days");
-    svg.append("g").attr("transform", `translate(0,${H - M.b})`).call(d3.axisBottom(x).ticks(7).tickFormat((d) => d === 0 ? "Low" : (d > 0 ? "+" : "") + d + "d"))
+    svg.append("g").attr("transform", `translate(0,${H - M.b})`).call(d3.axisBottom(x).ticks(7).tickFormat((d) => d === 0 ? "Low" : (d > 0 ? "+" + d : "−" + Math.abs(d)) + "d"))
       .call((g) => g.select(".domain").style("stroke", "var(--cds-chart-axis)")).call((g) => g.selectAll("line").style("stroke", "var(--cds-chart-axis)"));
     svg.append("g").attr("transform", `translate(${M.l},0)`).call(d3.axisLeft(y).ticks(5).tickSize(-(W - M.l - M.r)))
       .call((g) => g.select(".domain").remove()).call((g) => g.selectAll("line").style("stroke", "var(--cds-chart-grid)"));
@@ -451,7 +464,7 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
       .attr("aria-label", "Each ATL retest by date, with how far below the ATL price fell in the next 30 days; held retests sit at zero");
     svg.append("g").attr("transform", `translate(0,${H - M.b})`).call(d3.axisBottom(x).ticks(W < 500 ? 4 : 8).tickFormat(d3.utcFormat("%Y")))
       .call((g) => g.selectAll("line,.domain").style("stroke", "var(--cds-chart-axis)"));
-    svg.append("g").attr("transform", `translate(${M.l},0)`).call(d3.axisLeft(y).ticks(5).tickFormat((v) => v + "%").tickSize(-(W - M.l - M.r)))
+    svg.append("g").attr("transform", `translate(${M.l},0)`).call(d3.axisLeft(y).ticks(5).tickFormat((v) => (v < 0 ? "−" + Math.abs(v) : v) + "%").tickSize(-(W - M.l - M.r)))
       .call((g) => g.select(".domain").remove()).call((g) => g.selectAll("line").style("stroke", "var(--cds-chart-grid)"));
     svg.append("line").attr("x1", M.l).attr("x2", W - M.r).attr("y1", y(0)).attr("y2", y(0)).style("stroke", "var(--cds-chart-reference)");
     svg.append("text").attr("x", W - M.r).attr("y", y(0) - 5).attr("text-anchor", "end").text("ATL");
