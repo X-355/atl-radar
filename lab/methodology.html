@@ -80,6 +80,7 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
   <ul>
     <li>A <b>possible-bottom day</b> is a day when a coin's perpetual future is at least 25% below its 30-day high, judged at 00:00 UTC using only past data.</li>
     <li>A trade buys at the next hour's open and holds 72 hours, with an 8% stop-loss, a 0.05% fee each way and funding paid, at 1× (no leverage). The exact settings are also shown on the Lab page.</li>
+    <li>Funding here is Binance's actual historical funding rate for each coin, from its public archive (not an assumed rate as in the ATL trades). The rates at the 00:00, 08:00 and 16:00 UTC settlements during the 72 hours are added up: a long pays when the rate is positive and receives when it is negative. Two simplifications: the full 72 hours of funding is counted even when the stop-loss closes a trade early, and coins that settle every 4 hours are only charged at those three times a day.</li>
     <li>Each signal was defined on 2022–2023 data and then tested, unchanged, on 2024 onward, which it had never seen. A signal "holds up" only if it beats buying on a random day by more than luck would explain in the test period.</li>
     <li><b>t</b> measures how sure we can be that an average isn't luck; below about 2 (either sign) it could easily be chance. It is corrected for trades that overlap in time.</li>
     <li><b>Liquidated at 5×</b> is the share of trades that would have been liquidated with 5× leverage.</li>
