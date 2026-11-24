@@ -89,7 +89,7 @@ h2 { font-size:17px; margin:0 } h3 { font-size:15px; margin:18px 0 6px }
     <div class="stats" id="stats"></div>
     <div id="viewHive"></div>
     <div id="viewTable" hidden></div>
-    <p class="note">ATL here is the lowest price since the coin listed on Binance (USDT pair), read from weekly candles. That can be above the coin's true all-time low on other exchanges. The listing week and flash-crash wicks more than 50% below a week's open or close are ignored. Tap a coin for its chart, a liquidation calculator and the order book near its ATL.</p>
+    <p class="note">ATL here is the lowest price since the coin listed on Binance (USDT pair), read from weekly candles. That can be above the coin's true all-time low on other exchanges. The listing week and flash-crash wicks more than 50% below a week's open or close are ignored. Tap a coin for its chart, a liquidation calculator and the order book near its ATL. Retests here use weekly candles on all the coins shown, so the counts differ from the Research Lab, which uses daily data on a fixed set of coins.</p>
   </section>
 
   <section class="card" id="detail" hidden></section>
@@ -155,7 +155,7 @@ function retests(k) {
     if (recentMin < atl || L[i] > atl * 1.10 || i - last < 4) continue;
     last = i;
     const fut = L.slice(i + 1, i + 9), done = fut.length === 8;
-    const minF = Math.min(...fut);
+    const minF = Math.min(L[i], ...fut);          // the retest week itself counts: it can break the ATL on the way down
     out.push({ t: k[i].t, atl, atlT: k[ai].t, held: minF >= atl, depth: Math.min(0, minF / atl - 1), done,
                ret8: done ? C[i + 8] / C[i] - 1 : null });
   }
@@ -270,7 +270,7 @@ function renderTable() {
       el("td", {}, [el("b", {}, [r.sym])]), el("td", { class: "muted" }, [r.name]), el("td", {}, [fmtP(r.price)]), el("td", {}, [fmtP(r.atl)]),
       el("td", {}, [el("span", { class: "pill", style: `background:${b.bg};color:${b.fg}` }, [pct(r.dist)])]),
       el("td", {}, [r.daysSince]), el("td", { class: "down" }, [pct(r.fromAth)]),
-      el("td", {}, [isFinite(r.lev) ? r.lev.toFixed(1) + "×" : "any"]),
+      el("td", {}, [isFinite(r.lev) ? (Math.floor(r.lev * 10) / 10).toFixed(1) + "×" : "any"]),
       el("td", {}, [r.nrt ? `${Math.round(r.held * 100)}% of ${r.nrt}` : "none yet"]),
     ]);
   }));
@@ -379,7 +379,8 @@ function renderDetail() {
   const S = state.sel, r = S.r, box = $("detail");
   const targetLiq = r.atl * (1 - S.buffer);
   const maxLev = maxLevFor(S.entry, targetLiq, S.mmr);
-  const lev = S.lev ?? Math.max(1, Math.min(125, Math.floor(maxLev * 10) / 10));
+  const maxLevShown = Math.floor(maxLev * 10) / 10;              // round down, so the shown leverage never overshoots the target
+  const lev = S.lev ?? Math.max(1, Math.min(125, maxLevShown));
   const liq = liqPrice(S.entry, lev, S.mmr), liqVsAtl = liq / r.atl - 1;
   const done = r.rt.filter((x) => x.done), broke = done.filter((x) => !x.held);
   const wouldDie = liqVsAtl >= 0 ? broke.length : broke.filter((x) => x.depth <= liqVsAtl).length; // past breaks that went deeper than this liquidation
@@ -397,10 +398,10 @@ function renderDetail() {
       onchange: (e) => { const v = +e.target.value; if (v >= 1) { S.lev = v; renderDetail(); } } }),
     el("div", { class: "res" }, [
       el("div", { class: "muted" }, ["Highest leverage that keeps liquidation " + Math.round(S.buffer * 100) + "% under the ATL"]),
-      el("div", { class: "big" }, [!isFinite(maxLev) ? "Any" : maxLev < 1.1 ? "About 1×" : maxLev.toFixed(1) + "×"]),
+      el("div", { class: "big" }, [!isFinite(maxLev) ? "Any" : maxLev < 1.1 ? "About 1×" : maxLevShown.toFixed(1) + "×"]),
       el("div", { class: "muted" }, [!isFinite(maxLev) ? "Your entry is at or below that level, so even high leverage keeps liquidation under it. Check the distance to your liquidation instead."
         : maxLev < 1.1 ? `The ATL is so far below the price that only an unleveraged long stays safe. Liquidation would need to be at ${fmtP(targetLiq)}.`
-        : `Liquidation at ${fmtP(targetLiq)}`]),
+        : `Liquidation at ${fmtP(liqPrice(S.entry, maxLevShown, S.mmr))}`]),
     ]),
     el("div", { class: "res" }, [ lev <= 1 ? el("div", {}, ["At 1× a long can't be liquidated: you'd lose at most what you put in, if the coin went to zero."]) :
       el("div", {}, [`At ${lev.toFixed(1)}×: liquidation at `, el("b", { class: "down" }, [fmtP(liq)]), `, which is `,
@@ -425,7 +426,8 @@ function renderDetail() {
     book = el("div", {}, [
       el("div", {}, [`Within 2% of the price: `, el("b", {}, [usd(bk.bid2)]), " bids vs ", el("b", {}, [usd(bk.ask2)]), " asks"]),
       el("div", { class: "bar", "aria-hidden": "true" }, [el("i", { style: `width:${(b2 * 100).toFixed(0)}%;background:var(--up)` })]),
-      el("div", { style: "margin-top:8px" }, [`Within 5%: `, el("b", {}, [usd(bk.bid5)]), " bids vs ", el("b", {}, [usd(bk.ask5)]), " asks"]),
+      el("div", { style: "margin-top:8px" }, [`Within 5%: `, el("b", {}, [usd(bk.bid5)]), " bids vs ", el("b", {}, [usd(bk.ask5)]), " asks",
+        bk.depthPct < 0.05 ? el("span", { class: "muted" }, [` (Binance's book only reaches ${Math.round(bk.depthPct * 100)}% below the price, so the bid figure covers just that)`]) : ""]),
       el("p", { class: "note" }, [bk.reachesAtl
         ? el("span", {}, ["The visible book reaches down to the ATL. Bids within 3% of the ATL: ", el("b", {}, [usd(bk.nearAtl)]), "."])
         : `Binance shows the top 5,000 bid levels, which only reach ${Math.round(bk.depthPct * 100)}% below the price. The ATL is ${Math.round((1 - r.atl / bk.mid) * 100)}% below the price, so orders sitting at the ATL aren't visible yet. They show up as the price gets closer.`]),
@@ -451,12 +453,14 @@ function renderDetail() {
     const unusual = full.filter((x) => x.mult != null && x.mult >= 2);
     atlBox = el("div", {}, [
       el("p", {}, full.length
-        ? [`Buy orders resting within 3% of the ATL (${fmtP(r.atl * 0.97)}–${fmtP(r.atl * 1.03)}) on ${full.length} exchange${full.length > 1 ? "s" : ""} that show that far down: `,
+        ? [`Buy orders resting within 3% of the ATL (${fmtP(r.atl * 0.97)}–${fmtP(r.atl * 1.03)}) on ${full.length} exchange${full.length > 1 ? "s that show" : " that shows"} that far down: `,
            el("b", {}, [usd(tot)]), big.n ? ["; the largest single order is ", el("b", {}, [usd(big.n)]), ` on ${big.ex} at ${fmtP(big.p)}`] : "", "."]
         : ["None of these exchanges shows its book all the way down to this coin's ATL right now."]),
       el("p", { class: unusual.length ? "warn" : "muted" }, [unusual.length
         ? `Unusual: on ${unusual.map((x) => `${x.name} (${x.mult.toFixed(1)}×)`).join(", ")} there is more buying lined up at the ATL than at a typical price level between here and the ATL.`
-        : full.length ? "Nothing unusual: the ATL zone holds about the same or less than a typical price level between here and the ATL." : ""]),
+        : !full.length ? ""
+        : full.every((x) => x.mult == null) ? "The price is too close to the ATL to compare the buying there with a typical level further up, so this can't say whether it is unusual."
+        : "Nothing unusual: the ATL zone holds about the same or less than a typical price level between here and the ATL."]),
       el("table", {}, [
         el("thead", {}, [el("tr", {}, ["Exchange", "Sees the ATL?", "Bids within 3% of ATL", "Largest order there", "vs typical level"].map((h) => el("th", {}, [h])))]),
         el("tbody", {}, ax.map((x) => el("tr", { style: "cursor:default" }, !x.listed
@@ -484,7 +488,7 @@ function renderDetail() {
   box.replaceChildren(
     el("button", { type: "button", class: "close", onclick: () => { box.hidden = true; state.sel = null; } }, ["✕ Close"]),
     el("h2", {}, [`${r.name} (${r.sym}) `, el("span", { class: "tag" }, [r.pair])]),
-    el("p", { class: "note" }, [`Price ${fmtP(r.price)} · Binance ATL ${fmtP(r.atl)} on ${dateOf(r.atlT)} (${r.daysSince} days ago) · ${pct(r.dist)} above it · ${pct(r.fromAth)} from its high of ${fmtP(r.ath)} · on Binance since ${dateOf(r.listed)}`]),
+    el("p", { class: "note" }, [`Price ${fmtP(r.price)} · Binance ATL ${fmtP(r.atl)} on ${dateOf(r.atlT)} (${r.daysSince === 0 ? "today" : r.daysSince === 1 ? "1 day ago" : r.daysSince + " days ago"}) · ${pct(r.dist)} above it · ${pct(r.fromAth)} from its high of ${fmtP(r.ath)} · on Binance since ${dateOf(r.listed)}`]),
     el("div", { class: "chartbox" }, [chartSVG(r, liq),
       el("div", { class: "legendrow" }, [el("span", {}, [el("i", { style: "background:var(--accent)" }), "Weekly close (log scale)"]),
         el("span", {}, [el("i", { style: "background:var(--up)" }), "Retest held"]), el("span", {}, [el("i", { style: "background:var(--down)" }), "Retest broke"]),

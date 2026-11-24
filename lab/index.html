@@ -248,7 +248,7 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
     <div class="cb-legend"><span><i data-draw="sw-ic0"></i>2022–2023</span><span><i data-draw="sw-ic1"></i>2024 onward</span></div>
     <p class="cb-note">Each bar is the rank correlation between a measure on a possible-bottom day and the return over the next 72 hours: 0 means no link, ±0.1 would already be useful. Measures that looked promising in 2022–23, like funding and taker buying, faded to nothing afterwards. Only volume vs normal and depth of the drawdown stayed slightly positive in both periods, which matches the spot finding that real bottoms come with a volume burst.</p>
   </div>
-  <p class="cb-note" id="atl-depth-note">Order-book depth at the ATL is now tracked live: ATL Radar shows the buy orders waiting at each coin's ATL on five exchanges, and a daily snapshot is saved so we can test later whether big walls make the ATL hold.</p>
+  <p class="cb-note" id="atl-depth-note">Order-book depth at the ATL is now tracked live: ATL Radar shows the buy orders waiting at each coin's ATL on five exchanges, and a daily snapshot of that market data (nothing about visitors) is saved so we can test later whether big walls make the ATL hold.</p>
 <script>
 (function () {
   const pct = (v, d) => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(d) + "%";
