@@ -17,7 +17,8 @@ header { display:flex; align-items:center; gap:12px; padding:14px 20px; border-b
 header h1 { font-size:19px; margin:0 } header .sub { color:var(--muted); font-size:13px }
 header .sp { flex:1 }
 button, select, input { font:inherit; color:var(--text); background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:6px 10px }
-button { cursor:pointer } button:hover { border-color:var(--accent) }
+button { cursor:pointer }
+.navlink { color:var(--text); background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:6px 10px; text-decoration:none } .navlink:hover { border-color:var(--accent) } button:hover { border-color:var(--accent) }
 button.on { background:var(--accent); color:#fff; border-color:var(--accent) }
 main { max-width:1180px; margin:0 auto; padding:18px 20px 60px }
 .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:16px }
@@ -66,6 +67,7 @@ h2 { font-size:17px; margin:0 } h3 { font-size:15px; margin:18px 0 6px }
 <header>
   <div><h1>ATL Radar</h1><div class="sub">How close the biggest coins are to their all-time lows on Binance, and what's waiting in the order book there</div></div>
   <div class="sp"></div>
+  <a class="navlink" href="lab/">Research Lab</a>
   <button id="themeBtn" type="button" aria-label="Switch light or dark mode">◐ Theme</button>
   <button id="refreshBtn" type="button">↻ Refresh</button>
 </header>
