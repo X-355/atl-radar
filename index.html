@@ -126,7 +126,8 @@ const fmtP = (p) => p == null || !isFinite(p) ? "–" : p >= 1000 ? "$" + p.toLo
 const pct = (x, d = 0) => { const v = Math.abs(x * 100).toFixed(d); return (+v === 0 ? "" : x >= 0 ? "+" : "−") + v + "%"; };
 const usd = (x) => x >= 1e9 ? "$" + (x / 1e9).toFixed(2) + "B" : x >= 1e6 ? "$" + (x / 1e6).toFixed(2) + "M" : x >= 1e3 ? "$" + (x / 1e3).toFixed(0) + "k" : "$" + x.toFixed(0);
 // short axis labels so big prices fit beside the chart on phones ($100k, not $100,000)
-const fmtAxis = (v) => v >= 1e6 ? "$" + +(v / 1e6).toFixed(1) + "M" : v >= 1e4 ? "$" + +(v / 1e3).toFixed(0) + "k" : fmtP(v);
+const fmtAxis = (v) => v >= 1e6 ? "$" + +(v / 1e6).toFixed(1) + "M" : v >= 1e4 ? "$" + +(v / 1e3).toFixed(0) + "k"
+  : v >= 1 ? "$" + v.toLocaleString("en-US", { maximumFractionDigits: 2 }) : "$" + +v.toPrecision(3);   // round grid values, no trailing zeros
 const dateOf = (ms) => new Date(ms).toISOString().slice(0, 10);
 function el(tag, attrs = {}, kids = []) {
   const e = document.createElement(tag);
