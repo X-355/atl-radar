@@ -116,8 +116,10 @@ const $ = (id) => document.getElementById(id);
 const state = { rows: [], view: "hive", sort: { key: "dist", dir: 1 }, sel: null };
 
 // ---------- helpers
-const fmtP = (p) => p == null || !isFinite(p) ? "–" : p >= 1000 ? "$" + p.toLocaleString(undefined, { maximumFractionDigits: 0 })
-  : p >= 10 ? "$" + p.toLocaleString(undefined, { maximumFractionDigits: 2 }) : p >= 1 ? "$" + p.toLocaleString(undefined, { maximumFractionDigits: 3 }) : "$" + Number(p.toPrecision(4));
+// prices: whole dollars from $1,000, always 2 decimals from $1, and 4 significant digits (zeros kept) under $1
+const fmtP = (p) => p == null || !isFinite(p) ? "–" : p >= 1000 ? "$" + p.toLocaleString("en-US", { maximumFractionDigits: 0 })
+  : p >= 1 ? "$" + p.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  : "$" + (p >= 1e-6 ? p.toPrecision(4) : p.toExponential(3));
 const pct = (x, d = 0) => (x >= 0 ? "+" : "−") + Math.abs(x * 100).toFixed(d) + "%";
 const usd = (x) => x >= 1e9 ? "$" + (x / 1e9).toFixed(2) + "B" : x >= 1e6 ? "$" + (x / 1e6).toFixed(2) + "M" : x >= 1e3 ? "$" + (x / 1e3).toFixed(0) + "k" : "$" + x.toFixed(0);
 const dateOf = (ms) => new Date(ms).toISOString().slice(0, 10);
