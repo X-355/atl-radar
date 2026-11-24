@@ -27,6 +27,7 @@ main { max-width:1180px; margin:0 auto; padding:18px 20px 60px }
 .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin-bottom:16px }
 .note { color:var(--muted); font-size:13.5px; margin:6px 0 0 }
 .muted { color:var(--muted) }
+.note a { color:var(--accent) }
 .row { display:flex; flex-wrap:wrap; gap:10px; align-items:center }
 .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:12px } @media (max-width:640px){ .stats { grid-template-columns:repeat(2,1fr) } }
 .stat { border:1px solid var(--line); border-radius:10px; padding:10px 12px }
@@ -72,6 +73,7 @@ h2 { font-size:17px; margin:0 } h3 { font-size:15px; margin:18px 0 6px }
   <div><h1>ATL Radar</h1><div class="sub">How close the biggest coins are to their all-time lows on Binance, and what's waiting in the order book there</div></div>
   <div class="sp"></div>
   <a class="navlink" href="lab/">Research Lab</a>
+  <a class="navlink" href="methodology.html">Methodology</a>
   <button id="themeBtn" type="button" aria-label="Switch light or dark mode">◐ Theme</button>
   <button id="refreshBtn" type="button">↻ Refresh</button>
 </header>
@@ -90,7 +92,7 @@ h2 { font-size:17px; margin:0 } h3 { font-size:15px; margin:18px 0 6px }
     <div class="stats" id="stats"></div>
     <div id="viewHive"></div>
     <div id="viewTable" hidden></div>
-    <p class="note">ATL here is the lowest price since the coin listed on Binance (USDT pair), read from weekly candles. That can be above the coin's true all-time low on other exchanges. Wicks in the listing week, and flash-crash wicks more than 50% below a week's open or close, are ignored. Tap a coin for its chart, a liquidation calculator and the order book near its ATL. Retests here use weekly candles on all the coins shown, so the counts differ from the Research Lab, which uses daily data on a fixed set of coins.</p>
+    <p class="note">ATL here is the lowest price since the coin listed on Binance (USDT pair), read from weekly candles. That can be above the coin's true all-time low on other exchanges. Wicks in the listing week, and flash-crash wicks more than 50% below a week's open or close, are ignored. Tap a coin for its chart, a liquidation calculator and the order book near its ATL. Every calculation is explained on the <a href="methodology.html">Methodology</a> page. Retests here use weekly candles on all the coins shown, so the counts differ from the Research Lab, which uses daily data on a fixed set of coins.</p>
   </section>
 
   <section class="card" id="detail" hidden></section>

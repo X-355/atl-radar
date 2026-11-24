@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Crypto Bottoms Lab · CoinTelescope</title>
+<title>Research Lab · CoinTelescope</title>
 <meta name="description" content="What big orders, ATL retests and futures data say about crypto bottoms: tested on years of Binance data.">
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <style>
@@ -32,6 +32,7 @@ main { max-width:1140px; margin:0 auto; padding:22px 20px 40px }
 .cb svg text { font-size:12px }
 .cb .tick text { fill: var(--muted) }
 #upd { color:var(--muted); font-size:13px }
+.cb a { color:var(--accent) }
 /* audit fixes */
 .cb h1, .cb-tile .cb-v { font-weight:600 }
 .cb-tile .cb-v { font-size:28px; letter-spacing:-0.01em }
@@ -106,8 +107,8 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
 </head>
 <body>
 <header>
-  <div><h1>Crypto Bottoms Lab</h1><div class="sub">What big orders, ATL retests and futures data say about crypto bottoms</div></div>
-  <nav><span id="upd"></span><a href="../">ATL Radar</a><button type="button" id="theme"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg>Theme</button></nav>
+  <div><h1>Research Lab</h1><div class="sub">What big orders, ATL retests and futures data say about crypto bottoms</div></div>
+  <nav><span id="upd"></span><a href="../">ATL Radar</a><a href="methodology.html">Methodology</a><button type="button" id="theme"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg>Theme</button></nav>
 </header>
 <main>
 <div class="cb">
@@ -324,14 +325,7 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
 })();
 </script>
 
-  <details id="method">
-    <summary>How this was measured, and what to keep in mind</summary>
-    <p>Data: Binance's public archive. Daily candles for prices; every executed trade (aggTrades) for the days around each event, with fills from the same taker order in the same millisecond merged into one order. Order sizes are in US dollars at the trade price.</p>
-    <p>"Big orders" are executed market orders, not resting limit orders. Institutions that buy with limit orders would not show up here; order-book depth (futures section) is the test for that.</p>
-    <p>Survivorship: the spot and ATL study covers coins from today's top 30 plus ICP and BSV (the futures section uses its own list of coins with Binance perpetuals), all of which are still trading, so mostly coins that recovered. BSV's numbers come from Binance futures, where its data starts in October 2023. Coins that collapsed and left the list are missing, which makes bottoms and ATL retests look better than they were.</p>
-    <p>Part of the "selling before the low" is mechanical, since the last days before a low are usually down days. The falling-knife comparison controls for some, not all, of that.</p>
-    <p>The ATL is the lowest price since the coin listed on Binance, not its all-time low everywhere.</p>
-  </details>
+  <p class="cb-note" id="method" style="margin-top:var(--cds-gap-xl)">How each number is measured, and the limits to keep in mind: see the <a href="methodology.html">Methodology</a> page.</p>
 </div>
   <p class="cb-note" id="copyright" style="text-align:right;max-width:none;margin-top:var(--cds-gap-xl)">© <span id="cy">2026</span> CoinTelescope. All Rights Reserved.</p>
 <script>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Methodology · ATL Radar</title>
+<meta name="robots" content="noindex">
+<style>
+:root { --bg:#f1f1ef; --panel:#fff; --line:#deded9; --text:#23262d; --muted:#5a5f69; --accent:#2563eb }
+[data-theme="dark"] { --bg:#14161b; --panel:#1d2027; --line:#2f333c; --text:#e8e9ec; --muted:#a2a7b2; --accent:#6ea0ff }
+* { box-sizing:border-box }
+body { margin:0; background:var(--bg); color:var(--text); font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif }
+header { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:14px 20px; border-bottom:1px solid var(--line); background:var(--panel); position:sticky; top:0; z-index:5 }
+header > div:first-child { flex:1 1 300px; min-width:0 }
+header h1 { font-size:19px; margin:0 } header .sub { color:var(--muted); font-size:13px }
+header a, header button { font:inherit; font-size:14px; color:var(--text); background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:6px 10px; text-decoration:none; cursor:pointer; white-space:nowrap }
+header a:hover, header button:hover { border-color:var(--accent) }
+main { max-width:820px; margin:0 auto; padding:18px 20px 60px }
+.card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px 20px; margin-bottom:16px }
+h2 { font-size:17px; margin:0 0 6px } p { margin:8px 0 } ul { margin:6px 0; padding-left:20px } li { margin:4px 0 }
+code { font-size:13px; background:color-mix(in srgb, var(--accent) 9%, transparent); padding:1px 5px; border-radius:5px }
+a { color:var(--accent) }
+.muted { color:var(--muted) }
+.copyright { text-align:right; font-size:12.5px; color:var(--muted); margin:8px 0 0 }
+@media (max-width:600px){ header .sub { display:none } header { padding:10px 14px } main { padding:12px 10px 40px } .card { padding:12px 14px } }
+</style>
+<script>
+try { const t = localStorage.getItem("atlradar.theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); if (t === "dark") document.documentElement.setAttribute("data-theme", "dark"); } catch (e) {}
+</script>
+</head>
+<body>
+<header>
+  <div><h1>Methodology</h1><div class="sub">How ATL Radar works out every number on the page</div></div>
+  <a href="./">ATL Radar</a>
+  <a href="lab/">Research Lab</a>
+  <button id="themeBtn" type="button" aria-label="Switch light or dark mode">◐ Theme</button>
+</header>
+<main>
+
+<section class="card">
+  <h2>What ATL Radar shows</h2>
+  <p>How close the biggest coins are to their all-time low (ATL) on Binance, what happened the last times each coin came back to its ATL, a liquidation calculator for a long with its liquidation below the ATL, and the buy orders waiting near the ATL on five exchanges.</p>
+  <p class="muted">Everything is read live in your browser from public exchange data. Nothing is stored or sent anywhere else. This is research, not financial advice.</p>
+</section>
+
+<section class="card">
+  <h2>Which coins</h2>
+  <ul>
+    <li>The coin list is CoinGecko's top 250 by market cap. If CoinGecko is busy, coins are ranked by Binance 24-hour trading volume instead, and the page says so.</li>
+    <li>Only coins with a Binance USDT pair are kept. Stablecoins, wrapped and staked tokens (such as WBTC or stETH) and gold tokens are left out.</li>
+    <li>The page shows the top 30, 50 or 100 of what is left. A coin is skipped if its Binance pair has had no trading for three weeks or its price feed is broken, and the next coin fills its place.</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>The all-time low (ATL)</h2>
+  <ul>
+    <li>The ATL is the lowest weekly low since the coin listed on Binance (USDT pair), using up to 1,000 weekly candles. It is Binance's low only, so it can be above the coin's true all-time low on other exchanges.</li>
+    <li>Wicks in the listing week are ignored: that week only counts from its open and close.</li>
+    <li>Flash-crash wicks are ignored: a weekly low more than 50% below that week's open or close is cut to 50% below it. In the same way, a weekly high more than twice the open or close is cut to twice it.</li>
+    <li>If the live price is below the old ATL, the live price becomes the ATL.</li>
+    <li>Because the data is weekly, the ATL date is the week it happened in (weeks start on Monday, UTC), not an exact day.</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>The honeycomb, table and summary</h2>
+  <ul>
+    <li><b>Above ATL</b> = live price ÷ ATL − 1. Tiles show it as a percentage up to +1,000%, and beyond that as a multiple of the ATL (for example 22×).</li>
+    <li><b>Colours:</b> within 10% of the ATL, 10–25% above, 25–50% above, 50–100% above, 2–4× the ATL, and over 4×. Tiles are sorted closest to the ATL first.</li>
+    <li><b>Coins within 10% of their ATL</b> and <b>set a new ATL in the last 30 days</b> (the ATL's week started within the last 30 days) count the coins on screen.</li>
+    <li><b>Past ATL retests held</b> pools every finished retest of the coins on screen (see below). <b>Median distance above ATL</b> is the middle coin's distance.</li>
+    <li>The table's <b>Max lev.</b> column uses the calculator below with a 1% maintenance margin and liquidation 10% under the ATL.</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>ATL retests</h2>
+  <ul>
+    <li>A <b>retest</b> is a finished week whose low came within 10% of the ATL as it stood then, judged only with data available at that time.</li>
+    <li>That earlier ATL must be at least 4 weeks old (no lower low in the 3 weeks before), and the coin must have at least 26 weeks of Binance history. Retests are at least 4 weeks apart, so one dip is not counted several times.</li>
+    <li><b>Held</b> means no weekly low went under that ATL in the retest week or the 8 weeks after it. <b>Broke</b> means one did. <b>Lowest vs ATL</b> is the deepest weekly low in that time.</li>
+    <li><b>Return after 8w</b> is the weekly close 8 weeks later against the retest week's close. Retests with fewer than 8 weeks since them are shown as <b>in progress</b> and left out of the counts.</li>
+    <li>The Research Lab also studies retests, but with daily data, a 30-day window and a fixed set of coins, so its numbers differ.</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>Liquidation calculator</h2>
+  <ul>
+    <li>It uses Binance's simplified formula for an isolated-margin long: liquidation price = entry × (1 − 1 ÷ leverage) ÷ (1 − maintenance margin rate).</li>
+    <li><b>Highest leverage</b> is the leverage whose liquidation sits the chosen distance under the ATL, rounded down to one decimal so it never overshoots.</li>
+    <li>You can change the entry price, the distance under the ATL, the leverage and the maintenance margin rate (0.4%, 1% or 2.5%). Real rates depend on the coin and position size.</li>
+    <li>The line under it counts how many past retests on that coin fell far enough to hit that liquidation.</li>
+    <li>Fees, funding and Binance's tiered margin are ignored, so treat the figures as estimates. At 1× a long cannot be liquidated.</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>Order book now (Binance)</h2>
+  <ul>
+    <li>Binance's public order book, up to 5,000 price levels on each side. <b>Within 2%</b> and <b>within 5%</b> add up the bids and asks that close to the mid price. When the bids stop short of 5%, the page says so.</li>
+    <li><b>Unusually large bids:</b> bids are grouped into 0.5% price zones below the price. A zone counts as unusual at 4× the median zone size, and is marked "at the ATL" when it is within 3% of the ATL.</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>Orders waiting at the ATL (five exchanges)</h2>
+  <ul>
+    <li>The page reads the public order books of Binance (up to 5,000 levels), OKX (up to 5,000), Coinbase (full book), Kraken (up to 500) and Gate (up to 1,000). Coinbase and Kraken are USD markets, the others USDT.</li>
+    <li>The <b>ATL zone</b> is 3% either side of the ATL. An exchange "sees the ATL" when its book reaches below that zone, or when it sent its whole book.</li>
+    <li><b>vs typical level</b> compares the buying per 1% of price in the ATL zone with the average per 1% between the ATL zone and today's price, leaving out the busy 2% next to the price. 2× or more is flagged as unusual. When the price is too close to the ATL to make that comparison, the page says so.</li>
+    <li>Orders this far from the price can be placed or pulled at any time, so this is a snapshot, not a floor.</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>Limits to keep in mind</h2>
+  <ul>
+    <li>Binance only: lows, history and most order books come from one exchange.</li>
+    <li>Weekly data smooths out moves inside a week, and the outlier filter can hide real but extreme prints.</li>
+    <li>Coins that collapsed and left the rankings are not shown, so the retest history leans towards coins that survived.</li>
+    <li>A coin returning to its ATL often breaks it. Leverage near an ATL is where liquidations happen.</li>
+  </ul>
+  <p class="muted">Data sources: Binance public market data, CoinGecko (coin ranking), and the public order books of OKX, Coinbase, Kraken and Gate.</p>
+</section>
+
+<p class="copyright">© <span id="cy">2026</span> CoinTelescope. All Rights Reserved.</p>
+</main>
+<script>
+(function () {
+  const root = document.documentElement;
+  document.getElementById("themeBtn").addEventListener("click", () => {
+    const t = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    if (t === "dark") root.setAttribute("data-theme", "dark"); else root.removeAttribute("data-theme");
+    try { localStorage.setItem("atlradar.theme", t); } catch (e) {}
+  });
+  try { document.getElementById("cy").textContent = new Date().getFullYear(); } catch (e) {}
+})();
+</script>
+</body>
+</html>
