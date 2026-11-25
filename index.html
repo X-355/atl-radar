@@ -62,6 +62,7 @@ svg text { fill:var(--muted); font-size:14px }
 .chartbox { margin:14px 0 6px } .chartbox svg { display:block; max-height:62vh } .chartbox svg text { font-size:inherit }
 .close { float:right }
 .copyright { text-align:right; font-size:12.5px; color:var(--muted); margin:8px 0 0 }
+.disclaimer a { color:var(--accent) }
 .disclaimer { font-size:12.5px; color:var(--muted); border-top:1px solid var(--line); padding-top:12px; margin-top:24px }
 @media (max-width:600px){ header .sub { display:none } header { padding:10px 14px } main { padding:12px 10px 40px } .card { padding:12px } }
 h2 { font-size:17px; margin:0 } h3 { font-size:15px; margin:18px 0 6px }
@@ -73,7 +74,6 @@ h2 { font-size:17px; margin:0 } h3 { font-size:15px; margin:18px 0 6px }
   <div><h1>ATL Radar</h1><div class="sub">How close the biggest coins are to their all-time lows on Binance, and what's waiting in the order book there</div></div>
   <div class="sp"></div>
   <a class="navlink" href="lab/">Research Lab</a>
-  <a class="navlink" href="methodology.html">Methodology</a>
   <button id="themeBtn" type="button" aria-label="Switch light or dark mode">◐ Theme</button>
   <button id="refreshBtn" type="button">↻ Refresh</button>
 </header>
@@ -92,12 +92,12 @@ h2 { font-size:17px; margin:0 } h3 { font-size:15px; margin:18px 0 6px }
     <div class="stats" id="stats"></div>
     <div id="viewHive"></div>
     <div id="viewTable" hidden></div>
-    <p class="note">ATL here is the lowest price since the coin listed on Binance (USDT pair), read from weekly candles. That can be above the coin's true all-time low on other exchanges. Wicks in the listing week, and flash-crash wicks more than 50% below a week's open or close, are ignored. Tap a coin for its chart, a liquidation calculator and the order book near its ATL. Every calculation is explained on the <a href="methodology.html">Methodology</a> page. Retests here use weekly candles on all the coins shown, so the counts differ from the Research Lab, which uses daily data on a fixed set of coins.</p>
+    <p class="note">ATL here is the lowest price since the coin listed on Binance (USDT pair), read from weekly candles. That can be above the coin's true all-time low on other exchanges. Wicks in the listing week, and flash-crash wicks more than 50% below a week's open or close, are ignored. Tap a coin for its chart, a liquidation calculator and the order book near its ATL. Retests here use weekly candles on all the coins shown, so the counts differ from the Research Lab, which uses daily data on a fixed set of coins.</p>
   </section>
 
   <section class="card" id="detail" hidden></section>
 
-  <p class="disclaimer">Research tool for personal use. Data is read straight from Binance's public API in your browser (and the coin list from CoinGecko). Nothing is stored or sent anywhere else. The liquidation figures use Binance's simplified isolated-margin formula and ignore fees, funding and tiered margin, so treat them as estimates. A coin returning to its ATL often breaks it. This is research, not financial advice.</p>
+  <p class="disclaimer">Research tool for personal use. Data is read straight from Binance's public API in your browser (and the coin list from CoinGecko). Nothing is stored or sent anywhere else. The liquidation figures use Binance's simplified isolated-margin formula and ignore fees, funding and tiered margin, so treat them as estimates. A coin returning to its ATL often breaks it. This is research, not financial advice. How every number is worked out: see the <a href="methodology.html">Methodology</a> page.</p>
   <p class="copyright">© <span id="cy">2026</span> CoinTelescope. All Rights Reserved.</p>
 </main>
 
