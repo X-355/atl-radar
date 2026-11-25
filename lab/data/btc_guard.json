@@ -1,0 +1,29 @@
+{
+ "updated_utc": "2026-11-25 06:56",
+ "started": "2026-11-16",
+ "weeks": 1,
+ "switches": 0,
+ "signal": "USDT",
+ "action": "start: stay in USDT",
+ "btc_close": 61271.08,
+ "sma20": 73796.24,
+ "gap_pct": -16.97,
+ "paper_usdt": 1000.0,
+ "hold_btc_usdt": 999.0,
+ "paper_return_pct": 0.0,
+ "hold_return_pct": -0.1,
+ "fee_per_switch_pct": 0.1,
+ "start_usdt": 1000.0,
+ "rows": [
+  {
+   "week_closed": "2026-11-16",
+   "btc_close": 61271.08,
+   "sma20": 73796.24,
+   "gap_pct": -16.97,
+   "signal": "USDT",
+   "action": "start: stay in USDT",
+   "paper_usdt": 1000.0,
+   "hold_btc_usdt": 999.0
+  }
+ ]
+}
