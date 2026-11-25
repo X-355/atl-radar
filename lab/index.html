@@ -25,7 +25,7 @@ body { margin:0; background:var(--bg); color:var(--text); font:15px/1.45 var(--f
 header { display:flex; align-items:center; gap:12px; padding:14px 20px; border-bottom:1px solid var(--line); background:var(--panel); position:sticky; top:0; z-index:5; flex-wrap:wrap }
 header h1 { font-size:19px; margin:0 } header .sub { color:var(--muted); font-size:13px }
 header nav { margin-left:auto; display:flex; gap:8px; align-items:center }
-header a, header button, .dash-select { font:inherit; font-size:14px; color:var(--text); background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:6px 10px; text-decoration:none; cursor:pointer }
+header a, header button, .dash-select { white-space:nowrap; font:inherit; font-size:14px; color:var(--text); background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:6px 10px; text-decoration:none; cursor:pointer }
 header a:hover, header button:hover { border-color:var(--accent) }
 main { max-width:1140px; margin:0 auto; padding:22px 20px 40px }
 .cb { max-width:none !important }
@@ -42,7 +42,8 @@ main { max-width:1140px; margin:0 auto; padding:22px 20px 40px }
 .cb .tick text { font-variant-numeric: tabular-nums }
 @media (max-width:700px) {
   .cb td.cb-l, .cb th.cb-l { white-space:normal; min-width:170px; max-width:240px }
-  header nav { margin-left:0; width:100% }
+  header nav { margin-left:0; width:100%; flex-wrap:wrap; row-gap:6px }
+  #upd { flex-basis:100% }
 }
 header button svg { width:14px; height:14px; vertical-align:-2px; margin-right:4px }
 
