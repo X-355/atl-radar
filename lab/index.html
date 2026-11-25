@@ -54,6 +54,11 @@ header button svg { width:14px; height:14px; vertical-align:-2px; margin-right:4
 .cb-lede { font-size: var(--cds-font-size-body); line-height: 1.5; max-width: 760px; margin: 0 0 var(--cds-gap-md); }
 .cb-note { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); line-height: 1.45; max-width: 760px; margin: var(--cds-gap-xs) 0 0; }
 .cb-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: var(--cds-gap-sm); margin: var(--cds-gap-md) 0; }
+#guard-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 820px) { #guard-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 420px) { #guard-tiles { grid-template-columns: minmax(0, 1fr); } }
+.cb h2[id] { scroll-margin-top: 92px; }
+@media (max-width: 600px) { .cb h2[id] { scroll-margin-top: 140px; } }
 .cb-tile { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); }
 .cb-tile .cb-k { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
 .cb-tile .cb-v { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: 30px; font-variant-numeric: tabular-nums; margin: 4px 0 2px; display: block; }
@@ -326,11 +331,11 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
 </script>
 
   <h2 id="guard">4 · Paper bot: the Bitcoin 20-week guard</h2>
-  <p class="cb-lede"><b>The one rule that passed a survivorship-free stress test.</b> Hold Bitcoin while its weekly close is above its 20-week average; otherwise sit in USDT. Tested on Binance data from 2018 to October 2026, it cut Bitcoin's worst drop from −72% to −37% (+40% a year vs +34% for holding, at 0.2% fees). From 2024 on it earned less than holding (+25% vs +35% a year) with a smaller worst drop (−34% vs −52%): crash insurance, not a profit booster. The same filter on baskets of top altcoins failed once delisted coins were included.</p>
+  <p class="cb-lede"><b>The one rule that passed a survivorship-free stress test.</b> Hold Bitcoin while its weekly close is above its 20-week average; otherwise sit in USDT. Tested on Binance data from 2018 to October 2026, it cut Bitcoin's worst drop from −72% to −37% (+40% a year vs +34% for holding, at a cautious 0.2% fee per switch; the paper bot below pays 0.1%, also tested). From 2024 on it earned less than holding (+25% vs +35% a year) with a smaller worst drop (−34% vs −52%): crash insurance, not a profit booster. The same filter on baskets of top altcoins failed once delisted coins were included.</p>
   <p class="cb-note">Below is a <b>paper bot</b>: every Monday after the weekly candle closes it logs what the rule would hold for the coming week, in a paper account that started at 1,000 USDT and pays 0.1% per switch. No exchange keys, no orders, no real money. Research, not financial advice.</p>
   <div class="cb-tiles" id="guard-tiles"><div class="cb-pending">Loading the paper bot's log…</div></div>
-  <div class="cb-scroll"><table id="guard-table"><thead><tr><th class="cb-l">Week</th><th>BTC close</th><th>20-week average</th><th>Gap</th><th class="cb-l">Position</th><th class="cb-l">Action</th><th>Paper account</th><th>Just holding BTC</th></tr></thead><tbody></tbody></table></div>
-  <p class="cb-note">Weeks are named by the Monday they began (UTC). The bot started in late November 2026, so it will take months of weekly entries before its own record means much. Until then, the stress test above is the evidence.</p>
+  <div class="cb-scroll"><table id="guard-table"><thead><tr><th class="cb-l">Week closed</th><th>BTC close</th><th>20-week average</th><th>Gap</th><th class="cb-l">Position for next week</th><th class="cb-l">Action</th><th>Paper account</th><th>Just holding BTC</th></tr></thead><tbody></tbody></table></div>
+  <p class="cb-note">Weeks are named by the Monday they began (UTC). Each row's position is held for the week after the one that closed. The bot started in late November 2026, so it will take months of weekly entries before its own record means much. Until then, the stress test above is the evidence.</p>
 <script>
 (function () {
   const $ = (id) => document.getElementById(id);
