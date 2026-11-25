@@ -325,6 +325,36 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
 })();
 </script>
 
+  <h2 id="guard">4 · Paper bot: the Bitcoin 20-week guard</h2>
+  <p class="cb-lede"><b>The one rule that passed a survivorship-free stress test.</b> Hold Bitcoin while its weekly close is above its 20-week average; otherwise sit in USDT. Tested on Binance data from 2018 to October 2026, it cut Bitcoin's worst drop from −72% to −37% (+40% a year vs +34% for holding, at 0.2% fees). From 2024 on it earned less than holding (+25% vs +35% a year) with a smaller worst drop (−34% vs −52%): crash insurance, not a profit booster. The same filter on baskets of top altcoins failed once delisted coins were included.</p>
+  <p class="cb-note">Below is a <b>paper bot</b>: every Monday after the weekly candle closes it logs what the rule would hold for the coming week, in a paper account that started at 1,000 USDT and pays 0.1% per switch. No exchange keys, no orders, no real money. Research, not financial advice.</p>
+  <div class="cb-tiles" id="guard-tiles"><div class="cb-pending">Loading the paper bot's log…</div></div>
+  <div class="cb-scroll"><table id="guard-table"><thead><tr><th class="cb-l">Week</th><th>BTC close</th><th>20-week average</th><th>Gap</th><th class="cb-l">Position</th><th class="cb-l">Action</th><th>Paper account</th><th>Just holding BTC</th></tr></thead><tbody></tbody></table></div>
+  <p class="cb-note">Weeks are named by the Monday they began (UTC). The bot started in late November 2026, so it will take months of weekly entries before its own record means much. Until then, the stress test above is the evidence.</p>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const money = (v) => "$" + v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const pct = (v) => { const a = Math.abs(v).toFixed(2); return (+a === 0 ? "" : v > 0 ? "+" : "−") + a + "%"; };
+  const tile = (k, v, s, cls) => { const t = document.createElement("div"); t.className = "cb-tile";
+    const a = document.createElement("div"); a.className = "cb-k"; a.textContent = k;
+    const b = document.createElement("b"); b.className = "cb-v" + (cls ? " " + cls : ""); b.textContent = v;
+    const c = document.createElement("div"); c.className = "cb-s"; c.textContent = s; t.append(a, b, c); return t; };
+  fetch("data/btc_guard.json", { cache: "no-cache" }).then((r) => r.ok ? r.json() : Promise.reject(r.status)).then((d) => {
+    $("guard-tiles").replaceChildren(
+      tile("Position for this week", d.signal === "HOLD BTC" ? "Holding BTC" : "In USDT", d.action, d.signal === "HOLD BTC" ? "cb-good" : "cb-warn"),
+      tile("BTC vs its 20-week average", pct(d.gap_pct), money(d.btc_close) + " vs " + money(d.sma20)),
+      tile("Paper account", money(d.paper_usdt), pct(d.paper_return_pct) + " since " + d.started + " · holding BTC: " + pct(d.hold_return_pct)),
+      tile("Weeks logged", String(d.weeks), d.switches + (d.switches === 1 ? " switch" : " switches") + " so far · updated " + d.updated_utc + " UTC"));
+    const tb = $("guard-table").tBodies[0]; tb.replaceChildren();
+    [...d.rows].reverse().forEach((x) => { const tr = tb.insertRow();
+      [[x.week_closed, "cb-l"], [money(x.btc_close)], [money(x.sma20)], [pct(x.gap_pct), x.gap_pct >= 0 ? "cb-good" : "cb-bad"],
+       [x.signal === "HOLD BTC" ? "Hold BTC" : "USDT", "cb-l"], [x.action, "cb-l"], [money(x.paper_usdt)], [money(x.hold_btc_usdt)]]
+        .forEach(([v, cls]) => { const td = tr.insertCell(); td.textContent = v; if (cls) td.className = cls; }); });
+  }).catch(() => { $("guard-tiles").replaceChildren(Object.assign(document.createElement("div"), { className: "cb-pending", textContent: "Couldn't load the paper bot's log." })); });
+})();
+</script>
+
   <p class="cb-note" id="method" style="margin-top:var(--cds-gap-xl)">How each number is measured, and the limits to keep in mind: see the <a href="methodology.html">Methodology</a> page.</p>
 </div>
   <p class="cb-note" id="copyright" style="text-align:right;max-width:none;margin-top:var(--cds-gap-xl)">© <span id="cy">2026</span> CoinTelescope. All Rights Reserved.</p>

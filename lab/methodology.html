@@ -90,6 +90,14 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
 </section>
 
 <section class="card">
+  <h2>4 · Paper bot: the Bitcoin 20-week guard</h2>
+  <ul>
+    <li><b>Rule:</b> after each weekly candle closes (Monday 00:00 UTC), hold BTC if the weekly close is above the average of the last 20 weekly closes, otherwise hold USDT. One decision a week, no leverage, no shorts, no stop-loss.</li>
+    <li><b>Paper account:</b> starts at 1,000 USDT; when holding, it moves with BTC's weekly close; each switch between BTC and USDT costs 0.1%. "Just holding BTC" starts from the same 1,000 USDT on the same week. Data: Binance's public BTCUSDT weekly candles. The bot has no exchange keys and places no orders.</li>
+    <li><b>Why this rule:</b> a stress test re-built the top 10, 20 and 50 Binance USDT coins week by week from 2018, including coins that were later delisted, and tried 4, 8, 12 and 26-week momentum and the 20-week average, at 0.1%, 0.2% and 0.4% fees. On altcoin baskets every version failed from 2024 on once dead coins were included. On Bitcoin alone the 20-week average held up from every start year and at every fee level, mainly by cutting the worst drop roughly in half.</li>
+    <li><b>Limits:</b> the 20-week average is a well-known rule, and 2018–2026 holds only about 20 in-and-out cycles, a small sample. It lags: it steps out after a fall has started and back in after a rise has started, and in choppy markets it can switch at a loss. In the stress test, weeks with missing candles counted as no change.</li>
+  </ul>
+
   <h2>Limits to keep in mind</h2>
   <ul>
     <li><b>Survivorship:</b> every coin studied is still trading today, mostly coins that recovered. Coins that collapsed and left the rankings are missing, which makes bottoms and ATL retests look better than they were.</li>
