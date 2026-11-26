@@ -361,6 +361,97 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
 })();
 </script>
 
+  <h2 id="polymarket">5 · Polymarket 5-minute Bitcoin markets: are the prices fair?</h2>
+  <p class="cb-lede"><b>Mostly yes, and the costs eat everything except one narrow window.</b> Every 5 minutes Polymarket opens an "Up or Down" market on Bitcoin. We replayed the full order book of every well-covered day and asked three things: does the price match how often each side really wins, can a model forecast better than the price, and does any simple rule make money after the spread and Polymarket's taker fee? From 4 minutes left down to about 1 minute, the market's own price forecast the result at least as well as our models, the simple rules lost money after costs, and the models' few small wins were within noise. The exception is the last 30 seconds, where a gradient-tree model forecast better than the price and made money on both halves of the data. That zone is a speed race against bots, so treat it as a lead to paper-test, not a proven edge.</p>
+  <p class="cb-note" id="pm-src">Loading…</p>
+  <div class="cb-tiles" id="pm-tiles"><div class="cb-pending">Loading the Polymarket study…</div></div>
+
+  <div class="cb-card">
+    <div class="cb-row">
+      <h3 style="margin:0;flex:1">Price vs how often "Up" really won</h3>
+      <select class="dash-select" id="pm-left-cal" aria-label="Seconds left"></select>
+    </div>
+    <div class="cb-chart" id="pm-cal"></div>
+    <div class="cb-legend"><span><i class="cb-dot" id="pm-sw0"></i>Markets grouped by "Up" price (bars: 95% range)</span><span><i id="pm-sw1"></i>Perfectly fair price</span></div>
+    <p class="cb-note">If the dots sit on the line, the price is a fair probability: "Up" at 30¢ wins about 30% of the time. Dots above the line mean "Up" was too cheap, below it too expensive. The gaps here are a few cents at most, smaller than the cost of trading.</p>
+  </div>
+
+  <div class="cb-card">
+    <div class="cb-row">
+      <h3 style="margin:0;flex:1">Simple rules, bought at the ask and held to the result</h3>
+      <select class="dash-select" id="pm-left-st" aria-label="Seconds left"></select>
+    </div>
+    <div class="cb-scroll"><table id="pm-table"><thead><tr><th class="cb-l">Rule</th><th>Trades</th><th>Win rate</th><th>Avg price</th><th>Return after fee</th><th>Same, 1 s slower</th><th>Other half of the data</th></tr></thead><tbody></tbody></table></div>
+    <p class="cb-note">Return is profit per $1 spent, after the spread and a taker fee of 0.05 × price × (1 − price) per share (1.25¢ at 50¢). The models are trained on one half of the days and scored on the other. "Return after fee" tests on the later days (from <span id="pm-tf">—</span>); "Other half of the data" swaps them, training on the later days and testing on the earlier ones. "1 s slower" fills at the order book one second after the signal. Green means profitable on both halves.</p>
+  </div>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const pct = (v, d = 1) => { if (v == null) return "—"; const a = Math.abs(v).toFixed(d); return (+a === 0 ? "" : v > 0 ? "+" : "−") + a + "%"; };
+  const tile = (k, v, s, cls) => { const t = document.createElement("div"); t.className = "cb-tile";
+    const a = document.createElement("div"); a.className = "cb-k"; a.textContent = k;
+    const b = document.createElement("b"); b.className = "cb-v" + (cls ? " " + cls : ""); b.textContent = v;
+    const c = document.createElement("div"); c.className = "cb-s"; c.textContent = s; t.append(a, b, c); return t; };
+  const fmtDay = (d) => new Date(d + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+  const label = (s) => s + " s left";
+  let D = null;
+  function fillSelect(sel, lefts, val, fn) { sel.replaceChildren(...lefts.map((l) => new Option(label(l), l))); sel.value = val; sel.onchange = fn; }
+  function drawCal() {
+    const el = $("pm-cal"); el.replaceChildren(); if (!D) return;
+    const left = +$("pm-left-cal").value;
+    const rows = D.calibration.filter((c) => c.left === left);
+    const W = Math.max(300, el.clientWidth), H = Math.min(380, Math.max(260, W * 0.5)), M = { l: 48, r: 14, t: 12, b: 38 };
+    const x = d3.scaleLinear().domain([0, 1]).range([M.l, W - M.r]), y = d3.scaleLinear().domain([0, 1]).range([H - M.b, M.t]);
+    const svg = d3.select(el).append("svg").attr("width", W).attr("height", H);
+    const f = (v) => Math.round(v * 100) + "¢";
+    svg.append("g").attr("transform", `translate(0,${H - M.b})`).call(d3.axisBottom(x).ticks(5).tickFormat(f)).call((g) => g.select(".domain").remove());
+    svg.append("g").attr("transform", `translate(${M.l},0)`).call(d3.axisLeft(y).ticks(5).tickFormat((v) => Math.round(v * 100) + "%").tickSize(-(W - M.l - M.r)))
+      .call((g) => g.select(".domain").remove()).call((g) => g.selectAll("line").style("stroke", "var(--cds-chart-grid)"));
+    svg.append("text").attr("x", (M.l + W - M.r) / 2).attr("y", H - 4).attr("text-anchor", "middle").text('Price of "Up" at that moment');
+    svg.append("line").attr("x1", x(0)).attr("y1", y(0)).attr("x2", x(1)).attr("y2", y(1)).style("stroke", dash.colors[2]).style("stroke-dasharray", "4 3");
+    svg.append("g").selectAll("line").data(rows).join("line").attr("x1", (d) => x(d.price)).attr("x2", (d) => x(d.price)).attr("y1", (d) => y(d.lo)).attr("y2", (d) => y(d.hi)).style("stroke", dash.colors[0]).style("stroke-width", 2);
+    const tip = document.createElement("div"); tip.className = "cb-tip"; tip.hidden = true; el.append(tip);
+    svg.append("g").selectAll("circle").data(rows).join("circle").attr("cx", (d) => x(d.price)).attr("cy", (d) => y(d.won)).attr("r", 5).style("fill", dash.colors[0])
+      .on("pointerenter", (ev, d) => { tip.replaceChildren(); const h = document.createElement("b"); const [lo, hi] = d.bin.split("-").map((v) => Math.round(+v * 100)); h.textContent = '"Up" priced ' + lo + "–" + hi + "¢"; tip.append(h);
+        [["Markets", d.n.toLocaleString("en-US")], ["Average price", (d.price * 100).toFixed(1) + "¢"], ['"Up" won', (d.won * 100).toFixed(1) + "%"]].forEach(([k, v]) => { const l = document.createElement("div"); l.textContent = k + ": " + v; tip.append(l); });
+        tip.hidden = false; tip.style.left = Math.min(x(d.price) + 10, W - 180) + "px"; tip.style.top = Math.max(0, y(d.won) - 70) + "px"; })
+      .on("pointerleave", () => { tip.hidden = true; });
+    $("pm-sw0").style.background = dash.colors[0]; $("pm-sw1").style.background = dash.colors[2];
+  }
+  function drawTable() {
+    if (!D) return;
+    const left = +$("pm-left-st").value, tb = $("pm-table").tBodies[0]; tb.replaceChildren();
+    D.strategies.filter((r) => r.left === left).forEach((r) => {
+      const tr = tb.insertRow(), a = r.fwd, s = r.fwd_slow, b = r.rev;
+      const both = a && b && a.ret > 0 && b.ret > 0;
+      const cls = (v) => v == null ? "" : v > 0 ? (both ? "cb-good" : "") : "cb-bad";
+      [[r.strategy.replace(", edge > ", ", edge over "), "cb-l"], [a ? a.n.toLocaleString("en-US") : "—"], [a ? (a.win * 100).toFixed(1) + "%" : "—"], [a ? (a.price * 100).toFixed(1) + "¢" : "—"],
+       [a ? pct(a.ret) : "—", a && cls(a.ret)], [s ? pct(s.ret) : "—", s && cls(s.ret)], [b ? pct(b.ret) : "—", b && cls(b.ret)]]
+        .forEach(([v, c]) => { const td = tr.insertCell(); td.textContent = v; if (c) td.className = c; });
+    });
+  }
+  fetch("data/pm_btc.json", { cache: "no-cache" }).then((r) => r.ok ? r.json() : Promise.reject(r.status)).then((d) => {
+    D = d;
+    $("pm-src").textContent = "Bitcoin 5-minute markets, " + fmtDay(d.first_day) + " to " + fmtDay(d.last_day) + " (" + d.days + " well-covered days, " + d.markets.toLocaleString("en-US") +
+      " markets). Order books from the public recording " + d.source + ". Results are Polymarket's official ones; our own reading of the price feed matched " + (d.outcome_check * 100).toFixed(0) + "% of them.";
+    $("pm-tf").textContent = fmtDay(d.test_from_fwd);
+    const f2 = d.forecast.find((q) => q.left === 120), f30 = d.forecast.find((q) => q.left === 30);
+    const edge = d.strategies.find((q) => q.left === 30 && q.strategy === "Gradient tree model, edge > 2c");
+    const perDay = edge && edge.fwd ? Math.round(edge.fwd.n / (d.days * 0.4)) : null;
+    $("pm-tiles").replaceChildren(
+      tile("Markets replayed", d.markets.toLocaleString("en-US"), d.days + " days of full order books, 6 moments per market"),
+      tile("Best forecaster, 2 minutes left", "The market", "its price beat both our models on both halves of the data", "cb-good"),
+      tile("Cost to buy at 50¢", (d.structure.median_spread_up_c / 2 + 1.25).toFixed(2) + "¢", "half the typical " + d.structure.median_spread_up_c + "¢ spread plus a 1.25¢ taker fee: " + ((d.structure.median_spread_up_c / 2 + 1.25) / 50 * 100).toFixed(1) + "% of the stake"),
+      tile("Only lead found: last 30 seconds", edge ? pct(edge.fwd.ret) + " / " + pct(edge.rev.ret) : "—", "gradient tree, per $1 after fees, on the two test halves · about " + perDay + " trades a day", "cb-warn"));
+    const lefts = [...new Set(d.calibration.map((c) => c.left))].sort((a, b) => b - a);
+    fillSelect($("pm-left-cal"), lefts, 120, drawCal);
+    fillSelect($("pm-left-st"), [...new Set(d.strategies.map((c) => c.left))].sort((a, b) => b - a), 30, drawTable);
+    drawCal(); drawTable();
+  }).catch(() => { $("pm-tiles").replaceChildren(Object.assign(document.createElement("div"), { className: "cb-pending", textContent: "Couldn't load the Polymarket study." })); });
+  const prev = window.cbRedraw; window.cbRedraw = () => { prev && prev(); drawCal(); };
+})();
+</script>
+
   <p class="cb-note" id="method" style="margin-top:var(--cds-gap-xl)">How each number is measured, and the limits to keep in mind: see the <a href="methodology.html">Methodology</a> page.</p>
 </div>
   <p class="cb-note" id="copyright" style="text-align:right;max-width:none;margin-top:var(--cds-gap-xl)">© <span id="cy">2026</span> CoinTelescope. All Rights Reserved.</p>

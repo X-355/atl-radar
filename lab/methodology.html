@@ -28,7 +28,7 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
 </head>
 <body>
 <header>
-  <div><h1>Methodology</h1><div class="sub">How the Research Lab measures bottoms, ATL retests, futures signals and the paper bot</div></div>
+  <div><h1>Methodology</h1><div class="sub">How the Research Lab measures bottoms, ATL retests, futures signals, the paper bot and the Polymarket study</div></div>
   <a href="./">Research Lab</a>
   <a href="../">ATL Radar</a>
   <button id="theme" type="button" aria-label="Switch light or dark mode">◐ Theme</button>
@@ -37,8 +37,8 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
 
 <section class="card">
   <h2>What the Research Lab is</h2>
-  <p>A study of what happens around crypto price bottoms: what big orders do before a low, how longs with their liquidation below the all-time low (ATL) would have done, whether futures data could have spotted bottoms in advance, and a paper bot that tracks the one rule that passed our stress test. The results are worked out offline from years of Binance data and published as data files that the page reads. The page itself collects nothing about visitors.</p>
-  <p class="muted">"Data updated" in the header is the date sections 1–3 were last calculated; they are recalculated on the 2nd of each month. Section 4, the paper bot, updates every Monday and shows its own update time. This is research, not financial advice.</p>
+  <p>A study of what happens around crypto price bottoms: what big orders do before a low, how longs with their liquidation below the all-time low (ATL) would have done, whether futures data could have spotted bottoms in advance, and a paper bot that tracks the one rule that passed our stress test. Section 5 is a separate study of Polymarket's 5-minute Bitcoin markets. The results are worked out offline from years of Binance data and published as data files that the page reads. The page itself collects nothing about visitors.</p>
+  <p class="muted">"Data updated" in the header is the date sections 1–3 were last calculated; they are recalculated on the 2nd of each month. Section 4, the paper bot, updates every Monday and shows its own update time. Section 5, the Polymarket study, is a one-off study with its dates in its own text. This is research, not financial advice.</p>
 </section>
 
 <section class="card">
@@ -96,6 +96,18 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
     <li><b>Paper account:</b> starts at 1,000 USDT; when holding, it moves with BTC's weekly close; each switch between BTC and USDT costs 0.1%. "Just holding BTC" starts from the same 1,000 USDT on the same week. Data: Binance's public BTCUSDT weekly candles. The bot has no exchange keys and places no orders.</li>
     <li><b>Why this rule:</b> a stress test re-built the top 10, 20 and 50 Binance USDT coins week by week from 2018, including coins that were later delisted, and tried 4, 8, 12 and 26-week momentum and the 20-week average, at 0.1%, 0.2% and 0.4% fees. On altcoin baskets every version failed from 2024 on once dead coins were included. On Bitcoin alone the 20-week average held up from every start year and at every fee level, mainly by cutting the worst drop roughly in half.</li>
     <li><b>Limits:</b> the 20-week average is a well-known rule, and 2018–2026 holds only about 20 in-and-out cycles, a small sample. It lags: it steps out after a fall has started and back in after a rise has started, and in choppy markets it can switch at a loss. In the stress test, weeks with missing candles counted as no change.</li>
+  </ul>
+
+  <h2>5 · Polymarket 5-minute Bitcoin markets</h2>
+  <ul>
+    <li><b>Data:</b> a public recording of Polymarket's live order-book and price feeds for its 5-minute "Up or Down" markets (Hugging Face dataset polydata5/polymarket-updown-5m-ws, CC-BY-4.0). We used Bitcoin days where at least 1,380 of the 1,440 minutes were captured for both the order book and the price feed: 73 days from 10 September to 25 November 2026, 20,995 markets.</li>
+    <li><b>Order books:</b> rebuilt from the recorded snapshots and every price-level change. Checked on 126 million updates, our rebuilt best bid and ask matched the exchange's own figures 99.86% of the time. Each market was read at 4, 3, 2 and 1 minute, 30 seconds and 10 seconds before its end, and again 1 and 2 seconds later. Quotes older than 30 seconds were skipped.</li>
+    <li><b>Results:</b> Polymarket's official outcome of each market, read from its public market data. "Up" wins if the Chainlink BTC/USD 60-second average price (TWAP) at the end of the window is at least the 60-second average at its start (the "price to beat"). Our own reading of the recorded price feed gave the same result for 100% of markets.</li>
+    <li><b>Price-vs-start model:</b> a formula with nothing fitted. It estimates the final 60-second average from the latest Chainlink price and the part of the final minute already seen, takes the volatility from the previous 5 minutes, and turns the gap to the price to beat into a probability.</li>
+    <li><b>Gradient tree model:</b> a gradient-boosted tree classifier (the kind of model in the "Quant Tree" posts) using the price vs the start price, the formula's estimate and its uncertainty, volatility, seconds left, the "Up" price, both spreads, the size waiting at each best ask, and how far the two asks add up past $1. It was trained on 60% of the days and scored on the other 40%, then the whole test was repeated with the halves swapped.</li>
+    <li><b>Trades:</b> buy one side at the best ask and hold it to the result: a winning share pays $1, a losing one pays nothing. At most one trade per market per moment. A model trades when its probability minus the ask and the fee is more than 2¢ (or 5¢). Fee: Polymarket's published taker fee for these markets, 0.05 × price × (1 − price) per share (1.25¢ at 50¢); results were also run with no fee and with 0.072. "Return" is profit per $1 spent.</li>
+    <li><b>Forecast accuracy:</b> the Brier score, the average squared gap between the forecast probability and what happened (lower is better), compared with the market's own mid-price on the same moments.</li>
+    <li><b>Limits:</b> the backtest assumes our order fills at the recorded best ask. In real trading, faster bots can take that price first, and the recording's timestamps are when the recorder received each message, so a live bot would usually be slower still. The median size at the best ask was 353 shares, enough for small trades only. 73 days is a short stretch of market conditions. About 36 rule-and-moment combinations were tested, so a few can look good by chance; the last-30-seconds result counts as a lead because it held on both halves, not as proof. Polymarket has changed its fees several times in 2026. This is a one-off study, dated above; it is not updated automatically.</li>
   </ul>
 
   <h2>Limits to keep in mind</h2>
