@@ -486,7 +486,18 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
     const delay = st.book_delay_s ? st.book_delay_s.p95 : null;
     const healthy = ageMin <= 45 && (!delay || delay <= 2);
     $("pb-tiles").replaceChildren(
-      tile("Verdict (rules fixed in advance)", state[0], n + " of 300 trades needed before any verdict", state[1]),
+      (() => {
+        const done = Math.min(n, 300), pctDone = Math.round(done / 300 * 100);
+        const el = tile("Progress to a verdict", done + " / 300", v.state === "collecting" || !v.state
+          ? pctDone + "% of the trades needed · verdict: " + state[0].toLowerCase()
+          : "Verdict: " + state[0], v.state === "collecting" || !v.state ? "" : state[1]);
+        const bar = document.createElement("div");
+        bar.style.cssText = "height:8px;border-radius:4px;background:var(--cds-chart-grid);margin:8px 0 6px;overflow:hidden";
+        const fill = document.createElement("div");
+        fill.style.cssText = "height:100%;width:" + Math.max(pctDone, done ? 2 : 0) + "%;background:" + dash.colors[0] + ";border-radius:4px";
+        bar.append(fill); el.insertBefore(bar, el.lastChild);
+        return el;
+      })(),
       ...(c ? [
         tile("Return per $1, worse price", pct(c.mean), c.lo != null ? "95% range " + pct(c.lo) + " to " + pct(c.hi) + " · " + n + " trades" : n + " trade so far, range needs 2+", c.mean >= 0 ? "cb-good" : "cb-bad"),
         tile("Always buy the favourite, same windows", fav ? pct(fav.mean) : "—", "the bar the bot has to beat", "")
