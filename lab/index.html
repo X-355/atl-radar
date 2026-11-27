@@ -452,6 +452,56 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
 })();
 </script>
 
+  <h2 id="polybot">6 · Polybot: live paper test of the last-30-seconds lead</h2>
+  <p class="cb-lede">Section 5 found one lead: in the last 30 seconds of a 5-minute Bitcoin market, a gradient-tree model beat the market's price on both halves of the data. <b>Polybot tests that live, with pretend money only.</b> It runs around the clock on a small cloud server. 30 and 10 seconds before each window closes, it buys one side with a pretend $10, but only if the model's probability minus the price and Polymarket's fee is more than 2¢. Every trade is then scored against Polymarket's official result. The pass/fail rules were written down before the results came in, and the test can only pass if it beats simply buying the favourite.</p>
+  <p class="cb-note" id="pb-src">Loading the live log…</p>
+  <div class="cb-tiles" id="pb-tiles"><div class="cb-pending">Loading Polybot's live results…</div></div>
+  <div class="cb-card">
+    <h3 style="margin:0 0 var(--cds-gap-sm)">Latest paper trades</h3>
+    <div class="cb-scroll"><table id="pb-table"><thead><tr><th class="cb-l">Decided (your time)</th><th>Seconds left</th><th class="cb-l">Bought</th><th>Price</th><th>1 s later</th><th class="cb-l">Result</th><th>Profit on $10 (worse price)</th><th class="cb-l">Counts in test?</th></tr></thead><tbody></tbody></table></div>
+    <p class="cb-note">"Worse price" means each trade is scored at the higher of the price when the bot decided and the price one second later, after Polymarket's taker fee (0.05 × price × (1 − price) per share). The first 6 trades, made before the bot measured how fresh its order-book prices were, don't count. Full logs: <a href="https://github.com/X-355/polybot/tree/main/data" target="_blank" rel="noopener">github.com/X-355/polybot</a>.</p>
+  </div>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const SRC = "https://raw.githubusercontent.com/X-355/polybot/main/data/summary.json";
+  const pct = (v, d = 1) => { if (v == null) return "—"; const a = Math.abs(v * 100).toFixed(d); return (+a === 0 ? "" : v > 0 ? "+" : "−") + a + "%"; };
+  const usd = (v) => v == null ? "—" : (v < 0 ? "−$" : "+$") + Math.abs(v).toFixed(2);
+  const tile = (k, v, s, cls) => { const t = document.createElement("div"); t.className = "cb-tile";
+    const a = document.createElement("div"); a.className = "cb-k"; a.textContent = k;
+    const b = document.createElement("b"); b.className = "cb-v" + (cls ? " " + cls : ""); b.textContent = v;
+    const c = document.createElement("div"); c.className = "cb-s"; c.textContent = s; t.append(a, b, c); return t; };
+  const local = (u) => { if (!u) return "—"; const d = new Date(u.replace(" ", "T") + "Z");
+    return d.toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }); };
+  const fee = (p) => 0.05 * p * (1 - p);
+  const worse = (r) => { let p = +r.price; if (r.price_1s !== null && r.price_1s !== "" && r.price_1s !== undefined) p = Math.max(p, +r.price_1s);
+    p = Math.min(p, 0.999); return 10 * ((+r.win) - p - fee(p)) / p; };
+  const counts = (r) => r.lag_s !== undefined && r.lag_s !== null && r.lag_s !== "" && +r.lag_s <= 2;
+  fetch(SRC + "?t=" + Date.now(), { cache: "no-store" }).then((r) => r.ok ? r.json() : Promise.reject(r.status)).then((d) => {
+    const t = d.test || {}, v = t.verdict || {}, c = t.conservative, fav = (t.controls || {}).favourite, st = d.status || {};
+    const ageMin = Math.round((Date.now() - new Date(d.updated_utc.replace(" ", "T") + "Z")) / 60000);
+    $("pb-src").textContent = "Live: last report " + local(d.updated_utc) + " (" + ageMin + " min ago). Updates every 30 minutes. " + (v.text || "");
+    const n = c ? c.n : 0;
+    const state = { collecting: ["Collecting", "cb-warn"], undecided: ["Undecided", "cb-warn"], edge: ["Edge confirmed", "cb-good"], no_edge: ["No edge", "cb-bad"], not_proven: ["Not proven", "cb-bad"] }[v.state] || ["—", ""];
+    const delay = st.book_delay_s ? st.book_delay_s.p95 : null;
+    const healthy = ageMin <= 45 && (!delay || delay <= 2);
+    $("pb-tiles").replaceChildren(
+      tile("Verdict (rules fixed in advance)", state[0], n + " of 300 trades needed before any verdict", state[1]),
+      tile("Return per $1, worse price", c ? pct(c.mean) : "—", c && c.lo != null ? "95% range " + pct(c.lo) + " to " + pct(c.hi) + " · " + n + " trades" : "not enough trades yet", c ? (c.mean >= 0 ? "cb-good" : "cb-bad") : ""),
+      tile("Always buy the favourite, same windows", fav ? pct(fav.mean) : "—", "the bar the bot has to beat", ""),
+      tile("Bot health", healthy ? "Running" : "Check", "report " + ageMin + " min ago · order-book delay " + (delay != null ? delay.toFixed(2) + " s" : "—") + " (limit 2 s)", healthy ? "cb-good" : "cb-bad"));
+    const tb = $("pb-table").tBodies[0]; tb.replaceChildren();
+    (d.recent || []).slice(0, 25).forEach((r) => {
+      const tr = tb.insertRow(), p = worse(r), ok = counts(r);
+      [[local(r.decided_utc), "cb-l"], [r.left], [r.side, "cb-l"], [Math.round(r.price * 100) + "¢"], [r.price_1s ? Math.round(r.price_1s * 100) + "¢" : "—"],
+       [r.result + (+r.win ? " ✓" : " ✗"), "cb-l " + (+r.win ? "cb-good" : "cb-bad")], [usd(p), p >= 0 ? "cb-good" : "cb-bad"], [ok ? "Yes" : "No (before freshness check)", "cb-l"]]
+        .forEach(([val, cls]) => { const td = tr.insertCell(); td.textContent = val; if (cls) td.className = cls; });
+    });
+    if (!(d.recent || []).length) { const td = tb.insertRow().insertCell(); td.colSpan = 8; td.textContent = "No trades yet."; }
+  }).catch(() => { $("pb-tiles").replaceChildren(Object.assign(document.createElement("div"), { className: "cb-pending", textContent: "Couldn't load Polybot's live log." })); });
+})();
+</script>
+
   <p class="cb-note" id="method" style="margin-top:var(--cds-gap-xl)">How each number is measured, and the limits to keep in mind: see the <a href="methodology.html">Methodology</a> page.</p>
 </div>
   <p class="cb-note" id="copyright" style="text-align:right;max-width:none;margin-top:var(--cds-gap-xl)">© <span id="cy">2026</span> CoinTelescope. All Rights Reserved.</p>

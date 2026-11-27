@@ -28,7 +28,7 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
 </head>
 <body>
 <header>
-  <div><h1>Methodology</h1><div class="sub">How the Research Lab measures bottoms, ATL retests, futures signals, the paper bot and the Polymarket study</div></div>
+  <div><h1>Methodology</h1><div class="sub">How the Research Lab measures bottoms, ATL retests, futures signals, the paper bots and the Polymarket study</div></div>
   <a href="./">Research Lab</a>
   <a href="../">ATL Radar</a>
   <button id="theme" type="button" aria-label="Switch light or dark mode">◐ Theme</button>
@@ -38,7 +38,7 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
 <section class="card">
   <h2>What the Research Lab is</h2>
   <p>A study of what happens around crypto price bottoms: what big orders do before a low, how longs with their liquidation below the all-time low (ATL) would have done, whether futures data could have spotted bottoms in advance, and a paper bot that tracks the one rule that passed our stress test. Section 5 is a separate study of Polymarket's 5-minute Bitcoin markets. The results are worked out offline from years of Binance data and published as data files that the page reads. The page itself collects nothing about visitors.</p>
-  <p class="muted">"Data updated" in the header is the date sections 1–3 were last calculated; they are recalculated on the 2nd of each month. Section 4, the paper bot, updates every Monday and shows its own update time. Section 5, the Polymarket study, is a one-off study with its dates in its own text. This is research, not financial advice.</p>
+  <p class="muted">"Data updated" in the header is the date sections 1–3 were last calculated; they are recalculated on the 2nd of each month. Section 4, the paper bot, updates every Monday and shows its own update time. Section 5, the Polymarket study, is a one-off study with its dates in its own text. Section 6, Polybot, updates live every 30 minutes. This is research, not financial advice.</p>
 </section>
 
 <section class="card">
@@ -108,6 +108,17 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
     <li><b>Trades:</b> buy one side at the best ask and hold it to the result: a winning share pays $1, a losing one pays nothing. At most one trade per market per moment. A model trades when its probability minus the ask and the fee is more than 2¢ (or 5¢). Fee: Polymarket's published taker fee for these markets, 0.05 × price × (1 − price) per share (1.25¢ at 50¢); results were also run with no fee and with 0.072. "Return" is profit per $1 spent.</li>
     <li><b>Forecast accuracy:</b> the Brier score, the average squared gap between the forecast probability and what happened (lower is better), compared with the market's own mid-price on the same moments.</li>
     <li><b>Limits:</b> the backtest assumes our order fills at the recorded best ask. In real trading, faster bots can take that price first, and the recording's timestamps are when the recorder received each message, so a live bot would usually be slower still. The median size at the best ask was 353 shares, enough for small trades only. 73 days is a short stretch of market conditions. About 36 rule-and-moment combinations were tested, so a few can look good by chance; the last-30-seconds result counts as a lead because it held on both halves, not as proof. Polymarket has changed its fees several times in 2026. This is a one-off study, dated above; it is not updated automatically.</li>
+  </ul>
+
+  <h2>6 · Polybot: live paper test</h2>
+  <ul>
+    <li><b>What it is:</b> a paper-trading bot (no wallet, no keys, no orders, no real money) running 24/7 on a small cloud server (Amazon Lightsail, Mumbai). Code and full logs are public at github.com/X-355/polybot.</li>
+    <li><b>Inputs:</b> Polymarket's public order book for the current 5-minute Bitcoin market and the Chainlink BTC/USD price feed the market settles on, both live over WebSockets.</li>
+    <li><b>Decisions:</b> 30 and 10 seconds before each window closes, it computes the same features as the section 5 backtest and runs the same gradient-tree model, trained on all 73 days of section 5. It buys one side at the best ask with a pretend $10 only if the model's probability minus the ask and the taker fee is more than 2¢. Taker fee: 0.05 × price × (1 − price) per share, Polymarket's published rate for these markets.</li>
+    <li><b>Freshness check:</b> the bot compares Polymarket's timestamp on each order-book message with when it processed it, and skips the decision if its view is more than 2 seconds behind, or if the price feed is more than 10 seconds old. The first 6 trades (27 November 2026) were made before this check existed. They are shown but excluded, because during a fast market the bot was seeing prices that no longer existed.</li>
+    <li><b>Scoring:</b> each trade is scored against Polymarket's official result at the worse of the price when the bot decided and the price one second later, after the fee. "Return per $1" is profit divided by money spent.</li>
+    <li><b>The rules, fixed in advance (27 November 2026):</b> no verdict before 300 counted trades. Edge confirmed only if the 95% interval of return per $1 is above zero <i>and</i> the bot beats always buying the favourite in the same windows at the same moments. The two decisions in one window are treated as related when computing the interval. Interval below zero: no edge. Still unclear at 1,000 trades: not proven, and the test ends.</li>
+    <li><b>Limits:</b> a paper trade assumes our order would have filled at the best ask. In about half the early trades, less than $10 was on offer at that price, and a real order also competes with faster bots. So even a passing result would be an upper bound on what a real bot could earn.</li>
   </ul>
 
   <h2>Limits to keep in mind</h2>
