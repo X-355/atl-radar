@@ -37,8 +37,8 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
 
 <section class="card">
   <h2>What the Research Lab is</h2>
-  <p>A study of what happens around crypto price bottoms: what big orders do before a low, how longs with their liquidation below the all-time low (ATL) would have done, whether futures data could have spotted bottoms in advance, and a paper bot that tracks the one rule that passed our stress test. Section 5 is a separate study of Polymarket's 5-minute Bitcoin markets. The results are worked out offline from years of Binance data and published as data files that the page reads. The page itself collects nothing about visitors.</p>
-  <p class="muted">"Data updated" in the header is the date sections 1–3 were last calculated; they are recalculated on the 2nd of each month. Section 4, the paper bot, updates every Monday and shows its own update time. Section 5, the Polymarket study, is a one-off study with its dates in its own text. Section 6, Polybot, updates live every 30 minutes. This is research, not financial advice.</p>
+  <p>A study of what happens around crypto price bottoms: what big orders do before a low, how longs with their liquidation below the all-time low (ATL) would have done, whether futures data could have spotted bottoms in advance, and a paper bot that tracks the one rule that passed our stress test. Sections 5 and 6 are a separate study of Polymarket's 5-minute Bitcoin markets and a live paper test of the one lead it found. The results are worked out offline and published as data files that the page reads. The page itself collects nothing about visitors.</p>
+  <p class="muted">"Sections 1–3 updated" in the header is the date those sections were last calculated; they are recalculated on the 2nd of each month. Section 4, the paper bot, updates every Monday and shows its own update time. Section 5, the Polymarket study, is a one-off study with its dates in its own text. Section 6, Polybot, updates live every 30 minutes. This is research, not financial advice.</p>
 </section>
 
 <section class="card">
@@ -98,6 +98,9 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
     <li><b>Limits:</b> the 20-week average is a well-known rule, and 2018–2026 holds only about 20 in-and-out cycles, a small sample. It lags: it steps out after a fall has started and back in after a rise has started, and in choppy markets it can switch at a loss. In the stress test, weeks with missing candles counted as no change.</li>
   </ul>
 
+</section>
+
+<section class="card">
   <h2>5 · Polymarket 5-minute Bitcoin markets</h2>
   <ul>
     <li><b>Data:</b> a public recording of Polymarket's live order-book and price feeds for its 5-minute "Up or Down" markets (Hugging Face dataset polydata5/polymarket-updown-5m-ws, CC-BY-4.0). We used Bitcoin days where at least 1,380 of the 1,440 minutes were captured for both the order book and the price feed: 73 days from 10 September to 25 November 2026, 20,995 markets.</li>
@@ -110,23 +113,30 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
     <li><b>Limits:</b> the backtest assumes our order fills at the recorded best ask. In real trading, faster bots can take that price first, and the recording's timestamps are when the recorder received each message, so a live bot would usually be slower still. The median size at the best ask was 353 shares, enough for small trades only. 73 days is a short stretch of market conditions. About 36 rule-and-moment combinations were tested, so a few can look good by chance; the last-30-seconds result counts as a lead because it held on both halves, not as proof. Polymarket has changed its fees several times in 2026. This is a one-off study, dated above; it is not updated automatically.</li>
   </ul>
 
+</section>
+
+<section class="card">
   <h2>6 · Polybot: live paper test</h2>
   <ul>
     <li><b>What it is:</b> a paper-trading bot (no wallet, no keys, no orders, no real money) running 24/7 on a small cloud server (Amazon Lightsail, Mumbai). Code and full logs are public at github.com/X-355/polybot.</li>
     <li><b>Inputs:</b> Polymarket's public order book for the current 5-minute Bitcoin market and the Chainlink BTC/USD price feed the market settles on, both live over WebSockets.</li>
     <li><b>Decisions:</b> 30 and 10 seconds before each window closes, it computes the same features as the section 5 backtest and runs the same gradient-tree model, trained on all 73 days of section 5. It buys one side at the best ask with a pretend $10 only if the model's probability minus the ask and the taker fee is more than 2¢. Taker fee: 0.05 × price × (1 − price) per share, Polymarket's published rate for these markets.</li>
     <li><b>Freshness check:</b> the bot compares Polymarket's timestamp on each order-book message with when it processed it, and skips the decision if its view is more than 2 seconds behind, or if the price feed is more than 10 seconds old. The first 6 trades (27 November 2026) were made before this check existed. They are shown but excluded, because during a fast market the bot was seeing prices that no longer existed.</li>
-    <li><b>Scoring:</b> each trade is scored against Polymarket's official result at the worse of the price when the bot decided and the price one second later, after the fee. "Return per $1" is profit divided by money spent.</li>
+    <li><b>Scoring:</b> each trade is scored against Polymarket's official result at the worse of the price when the bot decided and the price one second later, after the fee. "Return per $1" is profit divided by money spent. The fee is paid on top of the stake, so a trade that loses everything comes out slightly worse than −100%. The "always buy the favourite" figure uses the same windows and moments as the bot's trades, so it is just as noisy until many trades are in.</li>
     <li><b>The rules, fixed in advance (27 November 2026):</b> no verdict before 300 counted trades. Edge confirmed only if the 95% interval of return per $1 is above zero <i>and</i> the bot beats always buying the favourite in the same windows at the same moments. The two decisions in one window are treated as related when computing the interval. Interval below zero: no edge. Still unclear at 1,000 trades: not proven, and the test ends.</li>
     <li><b>Limits:</b> a paper trade assumes our order would have filled at the best ask. In about half the early trades, less than $10 was on offer at that price, and a real order also competes with faster bots. So even a passing result would be an upper bound on what a real bot could earn.</li>
   </ul>
 
+</section>
+
+<section class="card">
   <h2>Limits to keep in mind</h2>
   <ul>
     <li><b>Survivorship:</b> every coin studied is still trading today, mostly coins that recovered. Coins that collapsed and left the rankings are missing, which makes bottoms and ATL retests look better than they were.</li>
     <li><b>Sample size:</b> one coin has only a few dozen bottoms and a handful of retests, so per-coin numbers swing a lot. Use them to see whether a coin follows the overall pattern, not as a signal.</li>
     <li><b>Binance only:</b> other exchanges can show different lows and different order flow.</li>
     <li>Past patterns can stop working, as several futures signals did after 2023.</li>
+    <li><b>No real trades:</b> sections 4 and 6 are paper bots and section 5 replays recorded data. Polymarket is not available in every country, so check your local rules before using it. This is research, not financial advice.</li>
   </ul>
 </section>
 

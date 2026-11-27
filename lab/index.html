@@ -363,6 +363,7 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
 
   <h2 id="polymarket">5 · Polymarket 5-minute Bitcoin markets: are the prices fair?</h2>
   <p class="cb-lede"><b>Mostly yes, and the costs eat everything except one narrow window.</b> Every 5 minutes Polymarket opens an "Up or Down" market on Bitcoin. We replayed the full order book of every well-covered day and asked three things: does the price match how often each side really wins, can a model forecast better than the price, and does any simple rule make money after the spread and Polymarket's taker fee? From 4 minutes left down to about 1 minute, the market's own price forecast the result at least as well as our models, the simple rules lost money after costs, and the models' few small wins were within noise. The exception is the last 30 seconds, where a gradient-tree model forecast better than the price and made money on both halves of the data. That zone is a speed race against bots, so treat it as a lead to paper-test, not a proven edge.</p>
+  <p class="cb-note"><b>No real trades:</b> section 5 replays recorded market data and Polybot in section 6 uses pretend money only. Polymarket is not available in every country; check your local rules before using it. Research, not financial advice.</p>
   <p class="cb-note" id="pm-src">Loading…</p>
   <div class="cb-tiles" id="pm-tiles"><div class="cb-pending">Loading the Polymarket study…</div></div>
 
@@ -442,7 +443,7 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
       tile("Markets replayed", d.markets.toLocaleString("en-US"), d.days + " days of full order books, 6 moments per market"),
       tile("Best forecaster, 2 minutes left", "The market", "its price beat both our models on both halves of the data", "cb-good"),
       tile("Cost to buy at 50¢", (d.structure.median_spread_up_c / 2 + 1.25).toFixed(2) + "¢", "half the typical " + d.structure.median_spread_up_c + "¢ spread plus a 1.25¢ taker fee: " + ((d.structure.median_spread_up_c / 2 + 1.25) / 50 * 100).toFixed(1) + "% of the stake"),
-      tile("Only lead found: last 30 seconds", edge ? pct(edge.fwd.ret) + " / " + pct(edge.rev.ret) : "—", "gradient tree, per $1 after fees, on the two test halves · about " + perDay + " trades a day", "cb-warn"));
+      tile("Only lead found: last 30 seconds", edge ? pct(edge.fwd.ret) + " / " + pct(edge.rev.ret) : "—", "gradient tree, per $1 after fees, on the two test halves" + (edge && edge.fwd_slow ? " (" + pct(edge.fwd_slow.ret) + " on the first if filled 1 s later)" : "") + " · about " + perDay + " trades a day", "cb-warn"));
     const lefts = [...new Set(d.calibration.map((c) => c.left))].sort((a, b) => b - a);
     fillSelect($("pm-left-cal"), lefts, 120, drawCal);
     fillSelect($("pm-left-st"), [...new Set(d.strategies.map((c) => c.left))].sort((a, b) => b - a), 30, drawTable);
@@ -459,7 +460,7 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
   <div class="cb-card">
     <h3 style="margin:0 0 var(--cds-gap-sm)">Latest paper trades</h3>
     <div class="cb-scroll"><table id="pb-table"><thead><tr><th class="cb-l">Decided (your time)</th><th>Seconds left</th><th class="cb-l">Bought</th><th>Price</th><th>1 s later</th><th class="cb-l">Result</th><th>Profit on $10 (worse price)</th><th class="cb-l">Counts in test?</th></tr></thead><tbody></tbody></table></div>
-    <p class="cb-note">"Worse price" means each trade is scored at the higher of the price when the bot decided and the price one second later, after Polymarket's taker fee (0.05 × price × (1 − price) per share). The first 6 trades, made before the bot measured how fresh its order-book prices were, don't count. Full logs: <a href="https://github.com/X-355/polybot/tree/main/data" target="_blank" rel="noopener">github.com/X-355/polybot</a>.</p>
+    <p class="cb-note">"Worse price" means each trade is scored at the higher of the price when the bot decided and the price one second later, after Polymarket's taker fee (0.05 × price × (1 − price) per share). The fee is paid on top of the stake, so a trade that loses everything comes out slightly worse than −100% (about −$10.46 on $10). The first 6 trades, made before the bot measured how fresh its order-book prices were, don't count. Full logs: <a href="https://github.com/X-355/polybot/tree/main/data" target="_blank" rel="noopener">github.com/X-355/polybot</a>.</p>
   </div>
 <script>
 (function () {
@@ -499,8 +500,8 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
         return el;
       })(),
       ...(c ? [
-        tile("Return per $1, worse price", pct(c.mean), c.lo != null ? "95% range " + pct(c.lo) + " to " + pct(c.hi) + " · " + n + " trades" : n + " trade so far, range needs 2+", c.mean >= 0 ? "cb-good" : "cb-bad"),
-        tile("Always buy the favourite, same windows", fav ? pct(fav.mean) : "—", "the bar the bot has to beat", "")
+        tile("Return per $1, worse price", pct(c.mean), (c.lo != null ? "95% range " + pct(c.lo) + " to " + pct(c.hi) + " · " + n + " trades" : n + (n === 1 ? " trade" : " trades") + " so far, range needs 2+") + (c.mean < -1 ? " · below −100% because the fee is paid on top of the stake" : ""), c.mean >= 0 ? "cb-good" : "cb-bad"),
+        tile("Always buy the favourite, same windows", fav ? pct(fav.mean) : "—", "the bar the bot has to beat" + (fav && fav.n != null ? " · " + fav.n + (fav.n === 1 ? " trade" : " trades") + " so far" + (fav.n < 30 ? ", too few to judge" : "") : ""), "")
       ] : [
         tile("Checks since the freshness check", ck ? ck.total.toLocaleString("en-US") : "—", ck ? ck.no_trade + " no edge · " + ck.skipped + " skipped (stale or missing data)" : "", ""),
         tile("Trades that count", "0", "it only buys when the edge after fees is over 2¢; most checks find the market already priced right", "cb-warn")
