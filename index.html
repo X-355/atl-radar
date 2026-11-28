@@ -15,7 +15,8 @@
 body { margin:0; background:var(--bg); color:var(--text); font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif }
 header { display:flex; align-items:center; gap:12px; padding:14px 20px; border-bottom:1px solid var(--line); background:var(--panel); position:sticky; top:0; z-index:5 }
 header h1 { font-size:19px; margin:0 } header .sub { color:var(--muted); font-size:13px }
-header .sp, .row > .sp { flex:1 }
+header .sp { flex:1 }
+.row > .grp.right { margin-left:auto }
 header { flex-wrap:wrap } header > div:first-child { flex:1 1 300px; min-width:0 }
 header button, header .navlink { white-space:nowrap }
 .grp { display:inline-flex; align-items:center; gap:8px; white-space:nowrap; margin-right:10px }
@@ -95,8 +96,8 @@ header .themesw:focus-visible { outline:2px solid var(--accent); outline-offset:
       <span class="grp"><span class="muted">View:</span>
       <button type="button" class="on" data-view="hive">Honeycomb</button>
       <button type="button" data-view="table">Table</button></span>
-      <span class="sp"></span><span id="status" class="muted" aria-live="polite">Loading…</span>
-      <button id="refreshBtn" type="button">↻ Refresh</button>
+      <span class="grp right"><span id="status" class="muted" aria-live="polite">Loading…</span>
+      <button id="refreshBtn" type="button">↻ Refresh</button></span>
     </div>
     <div class="stats" id="stats"></div>
     <div id="viewHive"></div>
