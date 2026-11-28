@@ -122,7 +122,7 @@ try { const t = localStorage.getItem("ct.theme") || localStorage.getItem("cblab.
 </head>
 <body>
 <header>
-  <div><h1>Research Lab</h1><div class="sub">Crypto ideas tested honestly on real data: bottoms, futures signals, Polymarket, ALT/BTC and live paper bots</div></div>
+  <div><h1>Research Lab</h1><div class="sub">Crypto ideas tested honestly on real data: bottoms, futures signals, Polymarket, ALT/BTC, funding rates and live paper bots</div></div>
   <nav><span id="upd"></span><a href="../">ATL Radar</a><button type="button" id="theme" class="themesw" role="switch" aria-checked="false" aria-label="Dark mode" title="Switch between light and dark"><svg class="sw-sun" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.2" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></g></svg><svg class="sw-moon" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" focusable="false"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" fill="currentColor"/></svg><span class="knob" aria-hidden="true"></span></button></nav>
 </header>
 <main>
@@ -585,6 +585,48 @@ try { const t = localStorage.getItem("ct.theme") || localStorage.getItem("cblab.
     });
     if (!rows.length) { const td = tb.insertRow().insertCell(); td.colSpan = 7; td.textContent = "No trades yet. The backtest pace is about 2 a week."; }
   }).catch(() => { $("ab-tiles").replaceChildren(Object.assign(document.createElement("div"), { className: "cb-pending", textContent: "The ALT/BTC bot hasn't published its first report yet." })); });
+})();
+</script>
+
+  <h2 id="carry">8 · Bitcoin funding-rate trade: getting paid by leveraged buyers</h2>
+  <p class="cb-lede"><b>Real, steady, and lately no better than cash.</b> On Binance's perpetual futures, traders betting on a rise usually pay a fee every 8 hours to those betting on a fall. If you own Bitcoin and short the same amount of futures, the price moves cancel out and you collect that fee. From 2020 to October 2026, the BTC version made about +12% a year on the position, or about +6% a year on the capital you'd need (the coins plus margin for the short). Its worst drop was only 2.3%. But the pay has faded with the market's mood: on capital, about 18% in 2021, 6% in 2024, 2.6% in 2025 and 1.3% in 2026 to October. Picking the coins or moments with the highest fee did worse than simply holding the BTC version, because switching cost more than it gained. This tracker shows what it is paying right now.</p>
+  <p class="cb-note"><b>Pretend money only.</b> Price moves cancel out, but this trade still has real risks: the exchange can fail (as FTX did), the fee can turn negative for weeks, and a short on borrowed money can be liquidated in a sudden spike. Research, not financial advice.</p>
+  <p class="cb-note" id="cr-src">Loading the live tracker…</p>
+  <div class="cb-tiles" id="cr-tiles"><div class="cb-pending">Loading the funding tracker…</div></div>
+  <div class="cb-card">
+    <h3 style="margin:0 0 var(--cds-gap-sm)">Latest funding payments</h3>
+    <div class="cb-scroll"><table id="cr-table"><thead><tr><th class="cb-l">Paid (your time)</th><th>Rate</th><th>BTC mark price</th><th>Received on $10,000</th></tr></thead><tbody></tbody></table></div>
+    <p class="cb-note">Opened once with a pretend $10,000: BTC bought on spot at the real best ask (0.1% fee) and the same amount shorted on the BTCUSDT perpetual at the real best bid (0.05% fee). It is never rebalanced. Each payment is the funding rate × the BTC amount × Binance's mark price at that moment. The total is valued hourly at the prices you could actually close at, after closing fees, on $20,000 of capital. Full log: <a href="https://github.com/X-355/polybot/tree/main/data/carry" target="_blank" rel="noopener">github.com/X-355/polybot</a>.</p>
+  </div>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const SRC = "https://raw.githubusercontent.com/X-355/polybot/main/data/carry/summary.json";
+  const pp = (v, d = 2) => { if (v == null) return "—"; const a = Math.abs(v).toFixed(d); return (+a === 0 ? "" : v > 0 ? "+" : "−") + a + "%"; };
+  const usd = (v, d = 2) => v == null ? "—" : (v < 0 ? "−$" : "+$") + Math.abs(v).toFixed(d);
+  const tile = (k, v, s, cls) => { const t = document.createElement("div"); t.className = "cb-tile";
+    const a = document.createElement("div"); a.className = "cb-k"; a.textContent = k;
+    const b = document.createElement("b"); b.className = "cb-v" + (cls ? " " + cls : ""); b.textContent = v;
+    const c = document.createElement("div"); c.className = "cb-s"; c.textContent = s; t.append(a, b, c); return t; };
+  const local = (u) => { if (!u) return "—"; const d = new Date(u.replace(" ", "T") + (u.length === 16 ? ":00Z" : "Z"));
+    return d.toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }); };
+  fetch(SRC + "?t=" + Date.now(), { cache: "no-store" }).then((r) => r.ok ? r.json() : Promise.reject(r.status)).then((d) => {
+    const ageMin = Math.round((Date.now() - new Date(d.updated_utc.replace(" ", "T") + "Z")) / 60000);
+    if (!d.opened_utc) { $("cr-src").textContent = "The tracker hasn't opened its position yet (last check " + ageMin + " min ago)."; $("cr-tiles").replaceChildren(); return; }
+    $("cr-src").textContent = "Live since " + local(d.opened_utc) + " (" + d.days.toFixed(1) + " days). Last update " + local(d.updated_utc) + " (" + ageMin + " min ago). Updates hourly; funding is paid every 8 hours.";
+    const healthy = ageMin <= 130 && !(d.errors || []).length;
+    $("cr-tiles").replaceChildren(
+      tile("Net if closed now", usd(d.net_if_closed_now_usd), pp(d.net_on_capital_pct, 3) + " on $20,000 of capital, after all fees · includes " + usd(d.fees_usd) + " of opening and closing fees", d.net_if_closed_now_usd >= 0 ? "cb-good" : "cb-bad"),
+      tile("Funding received", usd(d.funding_received_usd), d.funding_payments + (d.funding_payments === 1 ? " payment" : " payments") + " · " + d.negative_payments + " negative" + (d.funding_annualised_on_capital_pct != null ? " · pace " + pp(d.funding_annualised_on_capital_pct, 1) + " a year on capital (" + pp(d.funding_annualised_on_notional_pct, 1) + " on the position)" : " · yearly pace shown after half a day"), d.funding_received_usd >= 0 ? "cb-good" : "cb-bad"),
+      tile("Price moves, hedged", usd(d.hedge_pnl_usd), "BTC is $" + Math.round(d.btc_price).toLocaleString("en-US") + "; the long and short cancel out apart from the small gap between spot and futures prices", ""),
+      tile("Tracker health", healthy ? "Running" : "Check", "update " + ageMin + " min ago" + ((d.errors || []).length ? " · " + d.errors[d.errors.length - 1] : ""), healthy ? "cb-good" : "cb-bad"));
+    const tb = $("cr-table").tBodies[0]; tb.replaceChildren();
+    const rows = (d.recent_payments || []).slice().reverse().slice(0, 15);
+    rows.forEach((r) => { const tr = tb.insertRow();
+      [[local(r.time_utc), "cb-l"], [pp(r.rate_pct, 4)], ["$" + Math.round(r.mark).toLocaleString("en-US")], [usd(r.usd), r.usd >= 0 ? "cb-good" : "cb-bad"]]
+        .forEach(([v, c]) => { const td = tr.insertCell(); td.textContent = v; if (c) td.className = c; }); });
+    if (!rows.length) { const td = tb.insertRow().insertCell(); td.colSpan = 4; td.textContent = "No funding payments yet. Binance pays at 00:00, 08:00 and 16:00 UTC (5:30 AM, 1:30 PM and 9:30 PM in Sri Lanka)."; }
+  }).catch(() => { $("cr-tiles").replaceChildren(Object.assign(document.createElement("div"), { className: "cb-pending", textContent: "The funding tracker hasn't published yet." })); });
 })();
 </script>
 
