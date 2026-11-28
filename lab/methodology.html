@@ -46,7 +46,7 @@ try { const t = localStorage.getItem("ct.theme") || localStorage.getItem("cblab.
 
 <section class="card">
   <h2>What the Research Lab is</h2>
-  <p>A study of what happens around crypto price bottoms: what big orders do before a low, how longs with their liquidation below the all-time low (ATL) would have done, whether futures data could have spotted bottoms in advance, and a paper bot that tracks the one rule that passed our stress test. Sections 5 and 6 are a separate study of Polymarket's 5-minute Bitcoin markets and a live paper test of the one lead it found. The results are worked out offline and published as data files that the page reads. The page itself collects nothing about visitors.</p>
+  <p>A study of what happens around crypto price bottoms: what big orders do before a low, how longs with their liquidation below the all-time low (ATL) would have done, whether futures data could have spotted bottoms in advance, and a paper bot that tracks the one rule that passed our stress test. Sections 5 and 6 are a separate study of Polymarket's 5-minute Bitcoin markets and a live paper test of the one lead it found. Section 7 tests altcoins priced in Bitcoin (ALT/BTC), with a live paper bot, and section 8 tests the Bitcoin funding-rate trade, with a live paper tracker. The results are worked out offline and published as data files that the page reads. The page itself collects nothing about visitors.</p>
   <p class="muted">"Sections 1–3 updated" in the header is the date those sections were last calculated; they are recalculated on the 2nd of each month. Section 4, the paper bot, updates every Monday and shows its own update time. Section 5, the Polymarket study, is a one-off study with its dates in its own text. Sections 6 (Polybot) and 7 (the ALT/BTC bot) update live every 30 minutes, and section 8 (the funding tracker) every hour. This is research, not financial advice.</p>
 </section>
 
@@ -168,7 +168,7 @@ try { const t = localStorage.getItem("ct.theme") || localStorage.getItem("cblab.
     <li><b>Sample size:</b> one coin has only a few dozen bottoms and a handful of retests, so per-coin numbers swing a lot. Use them to see whether a coin follows the overall pattern, not as a signal.</li>
     <li><b>Binance only:</b> other exchanges can show different lows and different order flow.</li>
     <li>Past patterns can stop working, as several futures signals did after 2023.</li>
-    <li><b>No real trades:</b> sections 4 and 6 are paper bots and section 5 replays recorded data. Polymarket is not available in every country, so check your local rules before using it. This is research, not financial advice.</li>
+    <li><b>No real trades:</b> sections 4, 6, 7 and 8 use paper bots or a paper tracker with pretend money, and section 5 replays recorded data. No orders are ever placed. Polymarket is not available in every country, so check your local rules before using it. This is research, not financial advice.</li>
   </ul>
 </section>
 

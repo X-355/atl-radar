@@ -625,7 +625,7 @@ try { const t = localStorage.getItem("ct.theme") || localStorage.getItem("cblab.
     rows.forEach((r) => { const tr = tb.insertRow();
       [[local(r.time_utc), "cb-l"], [pp(r.rate_pct, 4)], ["$" + Math.round(r.mark).toLocaleString("en-US")], [usd(r.usd), r.usd >= 0 ? "cb-good" : "cb-bad"]]
         .forEach(([v, c]) => { const td = tr.insertCell(); td.textContent = v; if (c) td.className = c; }); });
-    if (!rows.length) { const td = tb.insertRow().insertCell(); td.colSpan = 4; td.textContent = "No funding payments yet. Binance pays at 00:00, 08:00 and 16:00 UTC (5:30 AM, 1:30 PM and 9:30 PM in Sri Lanka)."; }
+    if (!rows.length) { const td = tb.insertRow().insertCell(); td.colSpan = 4; const lt = [0, 8, 16].map((h) => new Date(Date.UTC(2026, 0, 1, h)).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })); td.textContent = "No funding payments yet. Binance pays at 00:00, 08:00 and 16:00 UTC (" + lt[0] + ", " + lt[1] + " and " + lt[2] + " your time)."; }
   }).catch(() => { $("cr-tiles").replaceChildren(Object.assign(document.createElement("div"), { className: "cb-pending", textContent: "The funding tracker hasn't published yet." })); });
 })();
 </script>
