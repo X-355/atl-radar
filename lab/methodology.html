@@ -47,7 +47,7 @@ try { const t = localStorage.getItem("ct.theme") || localStorage.getItem("cblab.
 <section class="card">
   <h2>What the Research Lab is</h2>
   <p>A study of what happens around crypto price bottoms: what big orders do before a low, how longs with their liquidation below the all-time low (ATL) would have done, whether futures data could have spotted bottoms in advance, and a paper bot that tracks the one rule that passed our stress test. Sections 5 and 6 are a separate study of Polymarket's 5-minute Bitcoin markets and a live paper test of the one lead it found. The results are worked out offline and published as data files that the page reads. The page itself collects nothing about visitors.</p>
-  <p class="muted">"Sections 1–3 updated" in the header is the date those sections were last calculated; they are recalculated on the 2nd of each month. Section 4, the paper bot, updates every Monday and shows its own update time. Section 5, the Polymarket study, is a one-off study with its dates in its own text. Section 6, Polybot, updates live every 30 minutes. This is research, not financial advice.</p>
+  <p class="muted">"Sections 1–3 updated" in the header is the date those sections were last calculated; they are recalculated on the 2nd of each month. Section 4, the paper bot, updates every Monday and shows its own update time. Section 5, the Polymarket study, is a one-off study with its dates in its own text. Sections 6 (Polybot) and 7 (the ALT/BTC bot) update live every 30 minutes. This is research, not financial advice.</p>
 </section>
 
 <section class="card">
@@ -136,6 +136,18 @@ try { const t = localStorage.getItem("ct.theme") || localStorage.getItem("cblab.
     <li><b>Limits:</b> a paper trade assumes our order would have filled at the best ask. In about half the early trades, less than $10 was on offer at that price, and a real order also competes with faster bots. So even a passing result would be an upper bound on what a real bot could earn.</li>
   </ul>
 
+</section>
+
+<section class="card">
+  <h2>7 · ALT/BTC on Binance</h2>
+  <ul>
+    <li><b>Why BTC terms:</b> an ALT/BTC pair (for example ETH/BTC) is priced in Bitcoin, so every result here is in BTC. A strategy can make dollars just because Bitcoin rose and still lose against simply holding BTC.</li>
+    <li><b>Slow test (weekly trend):</b> Binance's public weekly candles for every BTC-quoted pair in the archive (478), 2018–2026. Portfolios of the top 5, 10 and 20 pairs by volume were held or filtered by 4/8/12/26-week momentum or a 20-week moving average. Fees were 0.1%, 0.2% and 0.4% a trade, and the data was split in time. Holding the top 10 lost about 32% a year in BTC terms. The filters cut the losses but did not turn them into a consistent profit. The few versions that were positive in 2024–26 were strongly negative in the earlier years.</li>
+    <li><b>Fast test (minutes):</b> 5-minute candles from January 2021 for ETH, BNB, SOL, XRP, ADA, DOGE, LTC, LINK, DOT and AVAX against BTC, plus BTCUSDT. Features were the pair's recent returns, volatility, volume vs its average, the buyers' share of volume, Bitcoin's own recent moves and the hour. A gradient-tree model was trained on 2021–2023 and tested on 2024 onward. Costs were 0.3% (or 0.2%) per round trip plus one full price step. A trade was made only when the predicted move beat the cost. Checks: entering one candle late, results by year, removing the best 5% of trades, dropping data gaps, and random trades as a control.</li>
+    <li><b>What it found:</b> 5 and 60 minutes were noise. At 15 minutes the result stayed positive with late entry, but about half the profit disappeared, 2024 was negative and most of the gain came from a few sharp 2025 moves. Run the way a bot trades (every candle, one position per pair), it made 290 trades over 2024 to October 2026 (0.28 a day), +0.46% a trade on average, but the typical moment was slightly negative.</li>
+    <li><b>Live paper bot, rules fixed in advance (28 November 2026):</b> same model settings retrained on all data to October 2026, frozen, with a start-up self-check that its live feature code reproduces the training numbers exactly. At every 5-minute close it trades only if the predicted 15-minute move is more than 0.3% plus one price step. It pretends to buy at the real best ask or sell at the real best bid, taking the worse of two quotes 1 second apart, and closes 15 minutes later the same way. Fee 0.1% each way. One position per pair. It skips if candles are missing, arrive more than 10 s late, or the bid/ask hasn't updated for 60 s. Control: a coin-flip side on the same pair at the same moment, priced the same way. <b>Verdict:</b> none before 200 trades. Edge only if the 95% interval of the mean net per trade is above zero, treating trades at the same moment as related because pairs move together. Below zero: no edge. Still unclear at 600: not proven. <b>Early stop:</b> after 30 days, stop if trades are fewer than a third of the backtest pace.</li>
+    <li><b>Limits:</b> at 0.28 trades a day, 200 trades takes about two years. A paper trade assumes our order fills at the best quote. The bot records whether the best quote was big enough for its pretend 0.01 BTC, but a real order on these thinner books, during exactly the sharp moves it trades, could do worse.</li>
+  </ul>
 </section>
 
 <section class="card">

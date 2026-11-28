@@ -122,7 +122,7 @@ try { const t = localStorage.getItem("ct.theme") || localStorage.getItem("cblab.
 </head>
 <body>
 <header>
-  <div><h1>Research Lab</h1><div class="sub">Crypto ideas tested honestly on real data: bottoms, futures signals, Polymarket and live paper bots</div></div>
+  <div><h1>Research Lab</h1><div class="sub">Crypto ideas tested honestly on real data: bottoms, futures signals, Polymarket, ALT/BTC and live paper bots</div></div>
   <nav><span id="upd"></span><a href="../">ATL Radar</a><button type="button" id="theme" class="themesw" role="switch" aria-checked="false" aria-label="Dark mode" title="Switch between light and dark"><svg class="sw-sun" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.2" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></g></svg><svg class="sw-moon" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" focusable="false"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" fill="currentColor"/></svg><span class="knob" aria-hidden="true"></span></button></nav>
 </header>
 <main>
@@ -526,6 +526,65 @@ try { const t = localStorage.getItem("ct.theme") || localStorage.getItem("cblab.
     });
     if (!(d.recent || []).length) { const td = tb.insertRow().insertCell(); td.colSpan = 8; td.textContent = "No trades yet."; }
   }).catch(() => { $("pb-tiles").replaceChildren(Object.assign(document.createElement("div"), { className: "cb-pending", textContent: "Couldn't load Polybot's live log." })); });
+})();
+</script>
+
+  <h2 id="altbtc">7 · ALT/BTC on Binance: alts priced in Bitcoin</h2>
+  <p class="cb-lede"><b>The slow idea fails, and the fast one is a weak lead now being paper-tested.</b> Here every result is measured in BTC, not dollars. <b>Slow (weekly trend):</b> from 2018 to 2026, holding the top 10 alts against BTC lost about 32% a year in BTC terms, and every momentum or moving-average filter we tried still lost in at least one half of the data. Holding BTC beat rotating into alts. <b>Fast (5, 15 and 60 minutes):</b> a gradient-tree model on 10 liquid pairs was noise at 5 and 60 minutes. At 15 minutes it looked profitable, but the profit roughly halved once we entered one candle late instead of at the price the model had just seen. 2024 was negative, and most of the profit came from a few sharp moves in 2025 when many pairs moved together. Run the way a bot would trade, it averaged +0.46% a trade, but the typical moment was slightly negative.</p>
+  <p class="cb-note"><b>Pretend money only.</b> The ALT/BTC bot reads Binance's public prices and places no orders. Research, not financial advice.</p>
+  <p class="cb-note" id="ab-src">Loading the live log…</p>
+  <div class="cb-tiles" id="ab-tiles"><div class="cb-pending">Loading the ALT/BTC bot's live results…</div></div>
+  <div class="cb-card">
+    <h3 style="margin:0 0 var(--cds-gap-sm)">Latest ALT/BTC paper trades</h3>
+    <div class="cb-scroll"><table id="ab-table"><thead><tr><th class="cb-l">Opened (your time)</th><th class="cb-l">Pair</th><th class="cb-l">Action</th><th>Predicted 15-min move</th><th>Spread</th><th>Net after fees (BTC terms)</th><th>Coin-flip side</th></tr></thead><tbody></tbody></table></div>
+    <p class="cb-note">At every 5-minute close the bot predicts the next 15 minutes for ETH, BNB, SOL, XRP, ADA, DOGE, LTC, LINK, DOT and AVAX against BTC. It trades only when the prediction is bigger than 0.3% plus one price step. It buys at the real best ask or sells at the real best bid, taking the worse of two quotes a second apart, and closes 15 minutes later the same way. Binance's 0.1% fee is charged each way. The coin-flip column scores a random side on the same pair at the same moment, priced the same way. Full logs: <a href="https://github.com/X-355/polybot/tree/main/data/altbtc" target="_blank" rel="noopener">github.com/X-355/polybot</a>.</p>
+  </div>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const SRC = "https://raw.githubusercontent.com/X-355/polybot/main/data/altbtc/summary.json";
+  const pp = (v, d = 2) => { if (v == null || v === "") return "—"; v = +v; const a = Math.abs(v).toFixed(d); return (+a === 0 ? "" : v > 0 ? "+" : "−") + a + "%"; };
+  const tile = (k, v, s, cls) => { const t = document.createElement("div"); t.className = "cb-tile";
+    const a = document.createElement("div"); a.className = "cb-k"; a.textContent = k;
+    const b = document.createElement("b"); b.className = "cb-v" + (cls ? " " + cls : ""); b.textContent = v;
+    const c = document.createElement("div"); c.className = "cb-s"; c.textContent = s; t.append(a, b, c); return t; };
+  const local = (u) => { if (!u) return "—"; const d = new Date(u.replace(" ", "T") + "Z");
+    return d.toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }); };
+  fetch(SRC + "?t=" + Date.now(), { cache: "no-store" }).then((r) => r.ok ? r.json() : Promise.reject(r.status)).then((d) => {
+    const R = d.result, C = d.coin_flip_control, st = d.status || {}, ru = d.rules || {}, bt = d.backtest_expectation || {};
+    const ageMin = Math.round((Date.now() - new Date(d.updated_utc.replace(" ", "T") + "Z")) / 60000);
+    const started = new Date(d.started_utc.replace(" ", "T") + "Z"), check = new Date(started.getTime() + 30 * 86400000);
+    $("ab-src").textContent = "Live since " + local(d.started_utc) + ". Last report " + local(d.updated_utc) + " (" + ageMin + " min ago). Updates every 30 minutes.";
+    const state = { collecting: ["Collecting", "cb-warn"], undecided: ["Undecided", "cb-warn"], edge: ["Edge confirmed", "cb-good"], no_edge: ["No edge", "cb-bad"], not_proven: ["Not proven", "cb-bad"], stopped_low_activity: ["Stopped early", "cb-bad"] }[d.verdict] || ["—", ""];
+    const n = R ? R.trades : 0, need = ru.min_trades || 200, pctDone = Math.round(Math.min(n, need) / need * 100);
+    const prog = tile("Progress to a verdict", Math.min(n, need) + " / " + need, d.verdict === "collecting"
+      ? pctDone + "% of the trades needed · activity check " + check.toLocaleDateString(undefined, { day: "numeric", month: "short" }) + ": " + n + " trades vs ~" + (d.expected_trades_so_far || 0).toFixed(1) + " expected so far (backtest pace " + (bt.per_day ?? "—") + " a day)"
+      : "Verdict: " + state[0], d.verdict === "collecting" ? "" : state[1]);
+    const bar = document.createElement("div");
+    bar.style.cssText = "height:8px;border-radius:4px;background:var(--cds-chart-grid);margin:8px 0 6px;overflow:hidden";
+    const fill = document.createElement("div");
+    fill.style.cssText = "height:100%;width:" + Math.max(pctDone, n ? 2 : 0) + "%;background:" + dash.colors[0] + ";border-radius:4px";
+    bar.append(fill); prog.insertBefore(bar, prog.lastChild);
+    const healthy = ageMin <= 45 && (st.last_msg_age_s == null || st.last_msg_age_s < 60);
+    $("ab-tiles").replaceChildren(prog,
+      ...(R ? [
+        tile("Average net per trade", pp(R.mean_net_pct), (R.ci95_pct ? "95% range " + pp(R.ci95_pct[0]) + " to " + pp(R.ci95_pct[1]) : "range needs 2+ trades") + " · " + n + (n === 1 ? " trade" : " trades") + " · win rate " + Math.round(R.win_rate * 100) + "%", R.mean_net_pct >= 0 ? "cb-good" : "cb-bad"),
+        tile("Coin-flip side, same moments", C ? pp(C.mean_net_pct) : "—", "the bar to beat: what random direction earns after the same costs", "")
+      ] : [
+        tile("Checks so far", (st.checks || 0).toLocaleString("en-US"), (st.skipped || 0) + " skipped (missing or stale data) · " + (st.signals || 0) + " signals", ""),
+        tile("Trades so far", "0", "it trades only when the predicted move beats the costs, about once every 3–4 days in the backtest", "cb-warn")
+      ]),
+      tile("Bot health", healthy ? "Running" : "Check", "report " + ageMin + " min ago · candle delay " + (st.median_candle_delay_s != null ? st.median_candle_delay_s.toFixed(2) + " s" : "—") + " (limit 10 s)", healthy ? "cb-good" : "cb-bad"));
+    const tb = $("ab-table").tBodies[0]; tb.replaceChildren();
+    const rows = (d.recent || []).slice().reverse().slice(0, 25);
+    rows.forEach((r) => {
+      const tr = tb.insertRow(), net = +r.net_pct;
+      [[local(r.opened_utc), "cb-l"], [r.pair.replace("BTC", "/BTC"), "cb-l"], [r.side === "buy alt" ? "Buy alt" : "Sell alt", "cb-l"], [pp(r.pred_pct)], [pp(r.spread_pct, 3)],
+       [pp(net), net >= 0 ? "cb-good" : "cb-bad"], [pp(r.coin_net_pct)]]
+        .forEach(([val, cls]) => { const td = tr.insertCell(); td.textContent = val; if (cls) td.className = cls; });
+    });
+    if (!rows.length) { const td = tb.insertRow().insertCell(); td.colSpan = 7; td.textContent = "No trades yet. The backtest pace is about 2 a week."; }
+  }).catch(() => { $("ab-tiles").replaceChildren(Object.assign(document.createElement("div"), { className: "cb-pending", textContent: "The ALT/BTC bot hasn't published its first report yet." })); });
 })();
 </script>
 
