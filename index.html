@@ -51,7 +51,7 @@ tbody tr { cursor:pointer } tbody tr:hover { background:color-mix(in srgb, var(-
 .pill { display:inline-block; padding:1px 8px; border-radius:99px; font-size:12px; font-weight:600; color:#fff }
 .up { color:var(--up) } .down { color:var(--down) } .warn { color:var(--warn) }
 #detail[hidden] { display:none }
-.dgrid { display:grid; grid-template-columns:1.35fr 1fr; gap:16px } @media (max-width:900px){ .dgrid { grid-template-columns:1fr } }
+.dgrid { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,1fr); gap:16px } .dgrid > * { min-width:0 } @media (max-width:900px){ .dgrid { grid-template-columns:minmax(0,1fr) } }
 .calc label { display:block; font-size:13px; color:var(--muted); margin:10px 0 4px }
 .calc input[type=range] { width:100%; padding:0; border:0 }
 .big { font-size:26px; font-weight:700 }
