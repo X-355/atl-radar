@@ -483,14 +483,15 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
     const ageMin = Math.round((Date.now() - new Date(d.updated_utc.replace(" ", "T") + "Z")) / 60000);
     $("pb-src").textContent = "Live: last report " + local(d.updated_utc) + " (" + ageMin + " min ago). Updates every 30 minutes. " + (v.text || "");
     const n = c ? c.n : 0;
-    const state = { collecting: ["Collecting", "cb-warn"], undecided: ["Undecided", "cb-warn"], edge: ["Edge confirmed", "cb-good"], no_edge: ["No edge", "cb-bad"], not_proven: ["Not proven", "cb-bad"] }[v.state] || ["—", ""];
+    const state = { collecting: ["Collecting", "cb-warn"], undecided: ["Undecided", "cb-warn"], edge: ["Edge confirmed", "cb-good"], no_edge: ["No edge", "cb-bad"], not_proven: ["Not proven", "cb-bad"], stopped_low_activity: ["Stopped early", "cb-bad"] }[v.state] || ["—", ""];
     const delay = st.book_delay_s ? st.book_delay_s.p95 : null;
     const healthy = ageMin <= 45 && (!delay || delay <= 2);
     $("pb-tiles").replaceChildren(
       (() => {
         const done = Math.min(n, 300), pctDone = Math.round(done / 300 * 100);
         const el = tile("Progress to a verdict", done + " / 300", v.state === "collecting" || !v.state
-          ? pctDone + "% of the trades needed · verdict: " + state[0].toLowerCase()
+          ? pctDone + "% of the trades needed · verdict: " + state[0].toLowerCase() + (v.activity && v.activity.expected
+              ? " · activity check 11 Dec: " + v.activity.trades + " trades vs ~" + Math.round(v.activity.expected) + " expected" : "")
           : "Verdict: " + state[0], v.state === "collecting" || !v.state ? "" : state[1]);
         const bar = document.createElement("div");
         bar.style.cssText = "height:8px;border-radius:4px;background:var(--cds-chart-grid);margin:8px 0 6px;overflow:hidden";
