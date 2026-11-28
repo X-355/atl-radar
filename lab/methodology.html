@@ -154,6 +154,7 @@ try { const t = localStorage.getItem("ct.theme") || localStorage.getItem("cblab.
 <script>
 const sw = document.getElementById("theme"), sync = () => { const d = document.documentElement.getAttribute("data-theme") === "dark"; sw.setAttribute("aria-checked", d ? "true" : "false"); sw.setAttribute("aria-label", d ? "Dark mode on. Switch to light mode" : "Light mode on. Switch to dark mode"); };
 sync();
+try { const mq = matchMedia("(prefers-color-scheme: dark)"), saved = () => { try { return localStorage.getItem("ct.theme") || localStorage.getItem("cblab.theme"); } catch (e) { return null; } }; mq.addEventListener("change", () => { if (saved()) return; document.documentElement.dataset.theme = mq.matches ? "dark" : "light"; sync(); }); } catch (e) {}
 sw.onclick = () => { const t = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
   document.documentElement.dataset.theme = t; sync(); try { localStorage.setItem("ct.theme", t); } catch (e) {} };
 try { document.getElementById("cy").textContent = new Date().getFullYear(); } catch (e) {}

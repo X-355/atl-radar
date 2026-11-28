@@ -141,6 +141,7 @@ try { const t = localStorage.getItem("ct.theme") || localStorage.getItem("atlrad
   const root = document.documentElement;
   const sw = document.getElementById("themeBtn"), sync = () => { const d = document.documentElement.getAttribute("data-theme") === "dark"; sw.setAttribute("aria-checked", d ? "true" : "false"); sw.setAttribute("aria-label", d ? "Dark mode on. Switch to light mode" : "Light mode on. Switch to dark mode"); };
   sync();
+  try { const mq = matchMedia("(prefers-color-scheme: dark)"), saved = () => { try { return localStorage.getItem("ct.theme") || localStorage.getItem("atlradar.theme"); } catch (e) { return null; } }; mq.addEventListener("change", () => { if (saved()) return; if (mq.matches) root.setAttribute("data-theme", "dark"); else root.removeAttribute("data-theme"); sync(); }); } catch (e) {}
   sw.addEventListener("click", () => {
     const t = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
     if (t === "dark") root.setAttribute("data-theme", "dark"); else root.removeAttribute("data-theme");
