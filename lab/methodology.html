@@ -21,9 +21,18 @@ h2 { font-size:17px; margin:0 0 6px } p { margin:8px 0 } ul { margin:6px 0; padd
 .muted { color:var(--muted) }
 .copyright { text-align:right; font-size:12.5px; color:var(--muted); margin:8px 0 0 }
 @media (max-width:600px){ header .sub { display:none } header { padding:10px 14px } main { padding:12px 10px 40px } .card { padding:12px 14px } }
+header button.themesw { position:relative; width:60px; height:32px; padding:0; margin:0; border-radius:99px; display:inline-flex; align-items:center; justify-content:space-between; flex:none; background:var(--line); border:1px solid var(--line); cursor:pointer; line-height:0; min-height:0 }
+header button.themesw:hover { border-color:var(--accent) }
+header button.themesw svg { position:relative; z-index:1; margin:0 8px; width:15px; height:15px; vertical-align:middle; color:var(--muted) }
+header .themesw .knob { position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:var(--panel); box-shadow:0 1px 4px rgba(0,0,0,.35); transition:transform .18s ease }
+header .themesw[aria-checked="true"] .knob { transform:translateX(28px) }
+header .themesw .sw-sun { color:#d97706 } header .themesw[aria-checked="true"] .sw-sun { color:var(--muted) }
+header .themesw[aria-checked="true"] .sw-moon { color:#a5b4fc } header .themesw[aria-checked="false"] .sw-moon { color:var(--muted) }
+header .themesw:focus-visible { outline:2px solid var(--accent); outline-offset:2px }
+@media (prefers-reduced-motion: reduce) { header .themesw .knob { transition:none } }
 </style>
 <script>
-try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); document.documentElement.dataset.theme = t; } catch (e) {}
+try { const t = localStorage.getItem("ct.theme") || localStorage.getItem("cblab.theme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); document.documentElement.dataset.theme = t; } catch (e) {}
 </script>
 </head>
 <body>
@@ -31,7 +40,7 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
   <div><h1>Methodology</h1><div class="sub">How the Research Lab measures bottoms, ATL retests, futures signals, the paper bots and the Polymarket study</div></div>
   <a href="./">Research Lab</a>
   <a href="../">ATL Radar</a>
-  <button id="theme" type="button" aria-label="Switch light or dark mode">◐ Theme</button>
+  <button type="button" id="theme" class="themesw" role="switch" aria-checked="false" aria-label="Dark mode" title="Switch between light and dark"><svg class="sw-sun" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.2" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></g></svg><svg class="sw-moon" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" focusable="false"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" fill="currentColor"/></svg><span class="knob" aria-hidden="true"></span></button>
 </header>
 <main>
 
@@ -143,8 +152,10 @@ try { const t = localStorage.getItem("cblab.theme") || (matchMedia("(prefers-col
 <p class="copyright">© <span id="cy">2026</span> CoinTelescope. All Rights Reserved.</p>
 </main>
 <script>
-document.getElementById("theme").onclick = () => { const t = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-  document.documentElement.dataset.theme = t; try { localStorage.setItem("cblab.theme", t); } catch (e) {} };
+const sw = document.getElementById("theme"), sync = () => { const d = document.documentElement.getAttribute("data-theme") === "dark"; sw.setAttribute("aria-checked", d ? "true" : "false"); sw.setAttribute("aria-label", d ? "Dark mode on. Switch to light mode" : "Light mode on. Switch to dark mode"); };
+sync();
+sw.onclick = () => { const t = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = t; sync(); try { localStorage.setItem("ct.theme", t); } catch (e) {} };
 try { document.getElementById("cy").textContent = new Date().getFullYear(); } catch (e) {}
 </script>
 </body>

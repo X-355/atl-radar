@@ -67,6 +67,15 @@ svg text { fill:var(--muted); font-size:14px }
 @media (max-width:600px){ header .sub { display:none } header { padding:10px 14px } main { padding:12px 10px 40px } .card { padding:12px } }
 h2 { font-size:17px; margin:0 } h3 { font-size:15px; margin:18px 0 6px }
 .tag { font-size:11.5px; color:var(--muted); border:1px solid var(--line); border-radius:6px; padding:1px 6px }
+header button.themesw { position:relative; width:60px; height:32px; padding:0; margin:0; border-radius:99px; display:inline-flex; align-items:center; justify-content:space-between; flex:none; background:var(--line); border:1px solid var(--line); cursor:pointer; line-height:0; min-height:0 }
+header button.themesw:hover { border-color:var(--accent) }
+header button.themesw svg { position:relative; z-index:1; margin:0 8px; width:15px; height:15px; vertical-align:middle; color:var(--muted) }
+header .themesw .knob { position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:var(--panel); box-shadow:0 1px 4px rgba(0,0,0,.35); transition:transform .18s ease }
+header .themesw[aria-checked="true"] .knob { transform:translateX(28px) }
+header .themesw .sw-sun { color:#d97706 } header .themesw[aria-checked="true"] .sw-sun { color:var(--muted) }
+header .themesw[aria-checked="true"] .sw-moon { color:#a5b4fc } header .themesw[aria-checked="false"] .sw-moon { color:var(--muted) }
+header .themesw:focus-visible { outline:2px solid var(--accent); outline-offset:2px }
+@media (prefers-reduced-motion: reduce) { header .themesw .knob { transition:none } }
 </style>
 </head>
 <body>
@@ -74,7 +83,7 @@ h2 { font-size:17px; margin:0 } h3 { font-size:15px; margin:18px 0 6px }
   <div><h1>ATL Radar</h1><div class="sub">How close the biggest coins are to their all-time lows on Binance, and what's waiting in the order book there</div></div>
   <div class="sp"></div>
   <a class="navlink" href="lab/">Research Lab</a>
-  <button id="themeBtn" type="button" aria-label="Switch light or dark mode">◐ Theme</button>
+  <button type="button" id="themeBtn" class="themesw" role="switch" aria-checked="false" aria-label="Dark mode" title="Switch between light and dark"><svg class="sw-sun" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.2" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></g></svg><svg class="sw-moon" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" focusable="false"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" fill="currentColor"/></svg><span class="knob" aria-hidden="true"></span></button>
   <button id="refreshBtn" type="button">↻ Refresh</button>
 </header>
 <main>
@@ -525,11 +534,12 @@ document.querySelectorAll("[data-n]").forEach((b) => b.addEventListener("click",
 })();
 (function theme() {
   const root = document.documentElement; let t = null;
-  try { t = localStorage.getItem("atlradar.theme"); } catch (e) {}
+  try { t = localStorage.getItem("ct.theme") || localStorage.getItem("atlradar.theme"); } catch (e) {}
   if (!t) t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   const apply = (v) => v === "dark" ? root.setAttribute("data-theme", "dark") : root.removeAttribute("data-theme");
-  apply(t);
-  $("themeBtn").addEventListener("click", () => { t = t === "dark" ? "light" : "dark"; apply(t); try { localStorage.setItem("atlradar.theme", t); } catch (e) {} });
+  const sw = document.getElementById("themeBtn"), sync = () => { const d = document.documentElement.getAttribute("data-theme") === "dark"; sw.setAttribute("aria-checked", d ? "true" : "false"); sw.setAttribute("aria-label", d ? "Dark mode on. Switch to light mode" : "Light mode on. Switch to dark mode"); };
+  apply(t); sync();
+  sw.addEventListener("click", () => { t = t === "dark" ? "light" : "dark"; apply(t); sync(); try { localStorage.setItem("ct.theme", t); } catch (e) {} });
 })();
 let rsz; addEventListener("resize", () => { clearTimeout(rsz); rsz = setTimeout(() => state.rows.length && state.view === "hive" && renderHive(), 200); });
 try { $("cy").textContent = new Date().getFullYear(); } catch (e) {}
